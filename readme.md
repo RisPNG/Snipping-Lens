@@ -1,1 +1,1 @@
-`pyinstaller --onefile --windowed --name "Snipping Lens" --icon="my_icon.ico" --add-data="my_icon.png;." snipping_lens.py`
+A Windows tool to change the functionality of the default snipping tool into a Google Lens tool similar to Android.
