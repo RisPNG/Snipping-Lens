@@ -1,59 +1,84 @@
 name: Build and Release EXE
 
 permissions:
-  contents: write # Required to create a release and upload assets
+  contents: write  # Required to create a release and upload assets
 
 on:
   push:
     branches:
-      - main # Adjust to your desired branch
+      - main  # Adjust to your desired branch
 
 jobs:
   build:
+    # Only run if the commit message contains "Release v"
+    if: contains(github.event.head_commit.message, 'Release v')
     runs-on: windows-latest
 
     steps:
-      # Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Set up Python
       - name: Set up Python 3.13.2
         uses: actions/setup-python@v4
         with:
-          python-version: "3.13.2" # Specify your required Python version
+          python-version: "3.13.2"  # Specify your required Python version
 
-      # Install dependencies from requirements.txt
       - name: Install Dependencies
         run: pip install -r requirements.txt
 
-      # Install PyInstaller
       - name: Install PyInstaller
         run: pip install pyinstaller
 
-      # Build the executable using PyInstaller
       - name: Build executable
         run: pyinstaller --onefile --windowed --name "Snipping Lens" --icon="my_icon.ico" --add-data="my_icon.png;." snipping_lens.py
 
-      # Create a GitHub release (using commit SHA as the tag)
+      - name: Extract release info from commit message
+        id: extract_release_info
+        shell: bash
+        run: |
+          # Get the latest commit message
+          commit_msg=$(git log -1 --pretty=%B)
+          echo "Commit message:"
+          echo "$commit_msg"
+
+          # Extract the version (matches digits and periods after "Release v")
+          version=$(echo "$commit_msg" | grep -oP 'Release v\K[0-9.]+' || echo "")
+          
+          # Extract the description between triple double quotes.
+          # This assumes the description is enclosed in its own block.
+          description=$(echo "$commit_msg" | sed -n '/^"""/,/^"""/p' | sed '1d;$d')
+          
+          # Check if a valid version was found
+          if [ -z "$version" ]; then
+            echo "No valid release version found in the commit message. Exiting."
+            exit 1
+          fi
+
+          echo "Version: $version"
+          echo "Description: $description"
+
+          # Set the outputs for later steps
+          echo "::set-output name=version::$version"
+          echo "::set-output name=description::$description"
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ github.sha }}
-          release_name: "Release v${{ github.sha }}"
+          tag_name: v${{ steps.extract_release_info.outputs.version }}
+          release_name: "Release v${{ steps.extract_release_info.outputs.version }}"
+          body: ${{ steps.extract_release_info.outputs.description }}
           draft: false
           prerelease: false
 
-      # Upload the generated executable as a release asset
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/Snipping Lens.exe
+          asset_path: ./dist/Snipping\ Lens.exe
           asset_name: SnippingLens.exe
           asset_content_type: application/octet-stream
