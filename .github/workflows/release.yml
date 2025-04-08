@@ -1,12 +1,12 @@
 name: Build and Release EXE
 
 permissions:
-  contents: write  # Required to create a release and upload assets
+  contents: write # Required to create a release and upload assets
 
 on:
   push:
     branches:
-      - main  # Adjust to your desired branch
+      - main # Adjust to your desired branch
 
 jobs:
   build:
@@ -21,7 +21,7 @@ jobs:
       - name: Set up Python 3.13.2
         uses: actions/setup-python@v4
         with:
-          python-version: '3.13.2'  # Specify your required Python version
+          python-version: "3.13.2" # Specify your required Python version
 
       # Install dependencies from requirements.txt
       - name: Install Dependencies
@@ -42,8 +42,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.sha }}
-          release_name: Release ${{ github.sha }}
+          tag_name: v${{ github.sha }}
+          release_name: "Release v${{ github.sha }}"
           draft: false
           prerelease: false
 
