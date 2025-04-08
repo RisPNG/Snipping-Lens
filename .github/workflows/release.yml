@@ -1,5 +1,8 @@
 name: Build and Release EXE
 
+permissions:
+  contents: write  # Required to create a release and upload assets
+
 on:
   push:
     branches:
