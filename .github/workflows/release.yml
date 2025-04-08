@@ -1,0 +1,56 @@
+name: Build and Release EXE
+
+on:
+  push:
+    branches:
+      - main  # Adjust to your desired branch
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Set up Python
+      - name: Set up Python 3.13.2
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13.2'  # Specify your required Python version
+
+      # Install dependencies from requirements.txt
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      # Install PyInstaller
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      # Build the executable using PyInstaller
+      - name: Build executable
+        run: pyinstaller --onefile --windowed --name "Snipping Lens" --icon="my_icon.ico" --add-data="my_icon.png;." snipping_lens.py
+
+      # Create a GitHub release (using commit SHA as the tag)
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.sha }}
+          release_name: Release ${{ github.sha }}
+          draft: false
+          prerelease: false
+
+      # Upload the generated executable as a release asset
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/Snipping Lens.exe
+          asset_name: SnippingLens.exe
+          asset_content_type: application/octet-stream
