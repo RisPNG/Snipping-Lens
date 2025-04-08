@@ -1,12 +1,12 @@
 name: Build and Release EXE
 
 permissions:
-  contents: write  # Required to create a release and upload assets
+  contents: write # Required to create a release and upload assets
 
 on:
   push:
     branches:
-      - main  # Adjust to your desired branch
+      - main # Adjust to your desired branch
 
 jobs:
   build:
@@ -21,7 +21,7 @@ jobs:
       - name: Set up Python 3.13.2
         uses: actions/setup-python@v4
         with:
-          python-version: "3.13.2"  # Specify your required Python version
+          python-version: "3.13.2" # Specify your required Python version
 
       - name: Install Dependencies
         run: pip install -r requirements.txt
@@ -42,13 +42,13 @@ jobs:
           echo "$commit_msg"
 
           # Extract the version (matches digits and periods after "Release v")
-          version=$(echo "$commit_msg" | grep -oP 'Release v\K[0-9.]+' || echo "")
-          
-          # Extract the description between triple double quotes.
-          # This assumes the description is enclosed in its own block.
-          description=$(echo "$commit_msg" | sed -n '/^"""/,/^"""/p' | sed '1d;$d')
-          
-          # Check if a valid version was found
+          version=$(echo "$commit_msg" | sed -n 's/.*Release v\([0-9.]\+\).*/\1/p')
+
+          # Extract the description between the tilde markers.
+          # This assumes the description is enclosed between lines containing only '~'
+          description=$(echo "$commit_msg" | sed -n '/^~$/,/^~$/p' | sed '1d;$d')
+
+          # Ensure a valid version was found
           if [ -z "$version" ]; then
             echo "No valid release version found in the commit message. Exiting."
             exit 1
@@ -57,9 +57,11 @@ jobs:
           echo "Version: $version"
           echo "Description: $description"
 
-          # Set the outputs for later steps
-          echo "::set-output name=version::$version"
-          echo "::set-output name=description::$description"
+          # Set outputs using the environment file method.
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "description<<EOF" >> $GITHUB_OUTPUT
+          echo "$description" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Release
         id: create_release
@@ -68,7 +70,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ steps.extract_release_info.outputs.version }}
-          release_name: "Release v${{ steps.extract_release_info.outputs.version }}"
+          release_name: "v${{ steps.extract_release_info.outputs.version }}"
           body: ${{ steps.extract_release_info.outputs.description }}
           draft: false
           prerelease: false
@@ -79,6 +81,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/Snipping\ Lens.exe
+          asset_path: "./dist/Snipping Lens.exe"
           asset_name: SnippingLens.exe
           asset_content_type: application/octet-stream
