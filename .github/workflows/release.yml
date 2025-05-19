@@ -1,86 +1,178 @@
-name: Build and Release EXE
+name: Build and Release
 
 permissions:
-  contents: write # Required to create a release and upload assets
+  contents: write          # needed for create-release / upload-asset
 
 on:
   push:
-    branches:
-      - main # Adjust to your desired branch
-
+    branches: [ main ]     # run only on main
+    # release is triggered only if commit message contains “Release v…”
 jobs:
-  build:
-    # Only run if the commit message contains "Release v"
+# ───────────────────────────────  WINDOWS  ───────────────────────────────
+  build_windows:
     if: contains(github.event.head_commit.message, 'Release v')
     runs-on: windows-latest
+    outputs:
+      exe_path: ${{ steps.pack.outputs.exe_path }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Set up Python 3.13.2
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.13.2" # Specify your required Python version
+          python-version: '3.11'
 
-      - name: Install Dependencies
-        run: pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
 
-      - name: Install PyInstaller
-        run: pip install pyinstaller
+      - name: Build EXE
+        id: pack
+        shell: bash                     # use bash so “\” line-continuations work
+        run: |
+          pyinstaller --onefile --windowed \
+            --name SnippingLens \
+            --icon my_icon.ico \
+            --add-data "my_icon.png;." \
+            snipping_lens.py
 
-      - name: Build executable
-        run: pyinstaller --onefile --windowed --name "Snipping Lens" --icon="my_icon.ico" --add-data="my_icon.png;." snipping_lens.py
+          echo "exe_path=${GITHUB_WORKSPACE}/dist/SnippingLens.exe" >> "$GITHUB_OUTPUT"
 
-      - name: Extract release info from commit message
-        id: extract_release_info
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SnippingLens-exe
+          path: ${{ steps.pack.outputs.exe_path }}
+
+# ────────────────────────────────  LINUX  ────────────────────────────────
+  build_linux:
+    if: contains(github.event.head_commit.message, 'Release v')
+    runs-on: ubuntu-latest
+    outputs:
+      appimage_path: ${{ steps.buildapp.outputs.appimage_path }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y patchelf zsync
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build stand-alone binary
+        run: pyinstaller --onefile --name snipping_lens snipping_lens.py
+
+      - name: Fetch linuxdeploy & appimagetool
+        run: |
+          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x linuxdeploy-x86_64.AppImage appimagetool-x86_64.AppImage
+
+      - name: Package AppImage
+        id: buildapp
         shell: bash
         run: |
-          # Get the latest commit message
-          commit_msg=$(git log -1 --pretty=%B)
-          echo "Commit message:"
-          echo "$commit_msg"
+          mkdir -p AppDir/usr/bin
+          cp dist/snipping_lens AppDir/usr/bin/SnippingLens
+          chmod +x AppDir/usr/bin/SnippingLens
 
-          # Extract the version (matches digits and periods after "Release v")
-          version=$(echo "$commit_msg" | sed -n 's/.*Release v\([0-9.]\+\).*/\1/p')
+          # desktop entry + icon
+          mkdir -p AppDir/usr/share/applications
+          printf '[Desktop Entry]\nName=Snipping Lens\nExec=SnippingLens\nType=Application\nIcon=snippinglens\nCategories=Utility;' \
+            > AppDir/usr/share/applications/snippinglens.desktop
+          mkdir -p AppDir/usr/share/icons/hicolor/64x64/apps
+          cp my_icon.png AppDir/usr/share/icons/hicolor/64x64/apps/snippinglens.png
 
-          # Extract the description between the tilde markers.
-          # This assumes the description is enclosed between lines containing only '~'
-          description=$(echo "$commit_msg" | sed -n '/^~$/,/^~$/p' | sed '1d;$d')
+          # build the AppImage
+          ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
 
-          # Ensure a valid version was found
-          if [ -z "$version" ]; then
-            echo "No valid release version found in the commit message. Exiting."
-            exit 1
-          fi
+          # detect whatever got created, then rename to a consistent name
+          APPIMAGE=$(ls *.AppImage | head -n1)
+          echo "Found raw AppImage: $APPIMAGE"
+          mv "$APPIMAGE" SnippingLens.AppImage
 
-          echo "Version: $version"
-          echo "Description: $description"
+          # tell GitHub Actions where to find it
+          echo "appimage_path=${GITHUB_WORKSPACE}/SnippingLens.AppImage" >> "$GITHUB_OUTPUT"
 
-          # Set outputs using the environment file method.
-          echo "version=$version" >> $GITHUB_OUTPUT
-          echo "description<<EOF" >> $GITHUB_OUTPUT
-          echo "$description" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SnippingLens-appimage
+          path: ${{ steps.buildapp.outputs.appimage_path }}
 
-      - name: Create Release
-        id: create_release
+
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SnippingLens-appimage
+          path: ${{ steps.buildapp.outputs.appimage_path }}
+
+# ─────────────────────────  CREATE / PUBLISH RELEASE  ─────────────────────────
+  release:
+    needs: [ build_windows, build_linux ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # download both build artifacts
+      - uses: actions/download-artifact@v4
+        with:
+          name: SnippingLens-exe
+          path: release_assets
+      - uses: actions/download-artifact@v4
+        with:
+          name: SnippingLens-appimage
+          path: release_assets
+
+      # extract version + changelog from commit message
+      - id: meta
+        shell: bash
+        run: |
+          msg="$(git log -1 --pretty=%B)"
+          ver="$(echo "$msg" | sed -n 's/.*Release v\([[:alnum:].\-]\+\).*/\1/p')"
+          body="$(echo "$msg" | sed -n '/^~$/,/^~$/p' | sed '1d;$d')"
+          [[ -n "$ver" ]] || { echo "Version tag not found"; exit 1; }
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+          printf "body<<EOF\n%s\nEOF\n" "$body" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        id: create_rel
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.extract_release_info.outputs.version }}
-          release_name: "v${{ steps.extract_release_info.outputs.version }}"
-          body: ${{ steps.extract_release_info.outputs.description }}
-          draft: false
-          prerelease: false
+          tag_name: v${{ steps.meta.outputs.version }}
+          release_name: v${{ steps.meta.outputs.version }}
+          body: ${{ steps.meta.outputs.body }}
 
-      - name: Upload Release Asset
+      - name: Upload Windows EXE
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: "./dist/Snipping Lens.exe"
+          upload_url: ${{ steps.create_rel.outputs.upload_url }}
+          asset_path: release_assets/SnippingLens.exe
           asset_name: SnippingLens.exe
           asset_content_type: application/octet-stream
+
+      - name: Upload Linux AppImage
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_rel.outputs.upload_url }}
+          asset_path: release_assets/SnippingLens.AppImage
+          asset_name: SnippingLens.AppImage
+          asset_content_type: application/octet-stream
+
