@@ -65,18 +65,27 @@ jobs:
           sudo apt-get install -y \
             patchelf zsync \
             python3-gi gir1.2-gtk-3.0 gir1.2-appindicator3-0.1 \
+            libappindicator3-dev \
             xclip
           pip install -r requirements.txt
           pip install pyinstaller
 
       - name: Build standalone binary
-        run: pyinstaller --onefile --name snipping_lens snipping_lens.py
+        run: |
+          # Make sure we bundle the GI typelibs for AppIndicator
+          pyinstaller --onefile \
+            --name snipping_lens \
+            --hidden-import=gi \
+            --hidden-import=gi.repository.Gtk \
+            --hidden-import=gi.repository.AppIndicator3 \
+            snipping_lens.py
 
       - name: Fetch linuxdeploy & appimagetool
         run: |
           wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/releases/download/continuous/linuxdeploy-plugin-gtk-x86_64.AppImage
           wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-          chmod +x linuxdeploy-x86_64.AppImage appimagetool-x86_64.AppImage
+          chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-gtk-x86_64.AppImage appimagetool-x86_64.AppImage
 
       - name: Package AppImage
         id: buildapp
@@ -88,13 +97,31 @@ jobs:
 
           # desktop entry + icon
           mkdir -p AppDir/usr/share/applications
-          printf '[Desktop Entry]\nName=Snipping Lens\nExec=SnippingLens\nType=Application\nIcon=snippinglens\nCategories=Utility;' \
-            > AppDir/usr/share/applications/snippinglens.desktop
+          cat > AppDir/usr/share/applications/snippinglens.desktop << EOL
+          [Desktop Entry]
+          Name=Snipping Lens
+          Exec=SnippingLens
+          Type=Application
+          Icon=snippinglens
+          Categories=Utility;
+          StartupNotify=true
+          X-GNOME-UsesNotifications=true
+          EOL
+
           mkdir -p AppDir/usr/share/icons/hicolor/64x64/apps
           cp my_icon.png AppDir/usr/share/icons/hicolor/64x64/apps/snippinglens.png
 
-          # build the AppImage
-          ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
+          # Ensure my_icon.png is also in AppDir root for the AppImage
+          cp my_icon.png AppDir/snippinglens.png
+
+          # Build the AppImage with GTK plugin
+          APPIMAGE_EXTRACT_AND_RUN=1 \
+          GTK_USE_PORTAL=1 \
+          PATH="$PATH:$PWD" \
+          ./linuxdeploy-x86_64.AppImage \
+            --appdir AppDir \
+            --plugin gtk \
+            --output appimage
 
           # rename to a predictable filename
           APPIMAGE=$(ls *.AppImage | head -n1)

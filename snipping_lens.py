@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # Snipping Lens — area-screenshot → Google Lens
 # ────────────────────────────────────────────────────────────────
-# Linux        : GTK.StatusIcon only (legacy tray icons)
+# Linux        : AppIndicator3 for system tray (modern tray icons)
 #   • LEFT-click  → gnome-screenshot -c -a → Lens
-#   • RIGHT-click → Control window (Pause/Resume · See logs · Exit)
+#   • RIGHT-click → Control menu (Take Screenshot · Pause/Resume · See logs · Exit)
 #
 # Windows      : pystray + Tk (unchanged)
 # Other OSes   : unsupported
 #
 # Dependencies : Pillow, requests,
-#                (Linux) python3-gi gir1.2-gtk-3.0, xclip or wl-paste
+#                (Linux) python3-gi gir1.2-gtk-3.0 gir1.2-appindicator3-0.1, xclip or wl-paste
 #                (Windows) pystray, psutil
 # ----------------------------------------------------------------
 
@@ -37,17 +37,20 @@ except ImportError:
     psutil = None
     pystray = None
 
-# optional GTK (Linux)
-GTK = None
+# optional GTK & AppIndicator (Linux)
+GTK = APPIND = None
 if platform.system() == "Linux":
     try:
         import gi
         gi.require_version("Gtk", "3.0")
-        from gi.repository import Gtk  # type: ignore
+        gi.require_version("AppIndicator3", "0.1")
+        from gi.repository import Gtk, AppIndicator3  # type: ignore
 
         GTK = Gtk
-    except Exception:
-        GTK = None
+        APPIND = AppIndicator3
+    except Exception as e:
+        logging.warning(f"Failed to import GTK/AppIndicator3: {e}")
+        GTK = APPIND = None
 
 # optional Tk (Windows)
 TK = None
@@ -105,6 +108,7 @@ class SnippingLens:
         self.last_clip_hash: Optional[int] = None
 
         self.tray = None
+        self.pause_item = None
 
         if self.is_windows and psutil:
             self._start_process_monitor()
@@ -145,6 +149,12 @@ class SnippingLens:
             btn.config(text=label)
         elif GTK and isinstance(btn, GTK.Button):
             btn.set_label(label)
+        logging.info(f"Paused = {self.paused}")
+        
+    def _toggle_pause_indicator(self):
+        self.paused = not self.paused
+        if hasattr(self, 'pause_item') and self.pause_item:
+            self.pause_item.set_label("Resume" if self.paused else "Pause")
         logging.info(f"Paused = {self.paused}")
 
     def _open_logs(self, *_):
@@ -297,13 +307,48 @@ class SnippingLens:
             if tmp and os.path.exists(tmp):
                 os.unlink(tmp)
 
-    # ─────────── Linux tray (legacy StatusIcon) ───────────
+    # ─────────── Linux tray (AppIndicator3) ───────────
     def _tray_linux(self):
-        icon = GTK.StatusIcon.new_from_file(_default_icon())
-        icon.set_tooltip_text("Snipping Lens")
-        icon.connect("activate", lambda *_: self._take_screenshot())
-        icon.connect("popup-menu", lambda *_: self._open_control())
-        self.tray = icon
+        if not GTK or not APPIND:
+            logging.error("GTK or AppIndicator3 not available")
+            return
+            
+        # Create indicator
+        indicator = APPIND.Indicator.new(
+            "snipping-lens",
+            _default_icon(),
+            APPIND.IndicatorCategory.APPLICATION_STATUS
+        )
+        indicator.set_status(APPIND.IndicatorStatus.ACTIVE)
+        
+        # Create menu
+        menu = GTK.Menu()
+        
+        # Screenshot item - primary action
+        item_screenshot = GTK.MenuItem(label="Take Screenshot")
+        item_screenshot.connect("activate", self._take_screenshot)
+        menu.append(item_screenshot)
+        
+        menu.append(GTK.SeparatorMenuItem())
+        
+        # Pause/Resume item
+        self.pause_item = GTK.MenuItem(label="Pause")
+        self.pause_item.connect("activate", lambda *_: self._toggle_pause_indicator())
+        menu.append(self.pause_item)
+        
+        # See logs item
+        item_logs = GTK.MenuItem(label="See logs")
+        item_logs.connect("activate", self._open_logs)
+        menu.append(item_logs)
+        
+        # Exit item
+        item_exit = GTK.MenuItem(label="Exit")
+        item_exit.connect("activate", lambda *_: self._exit())
+        menu.append(item_exit)
+        
+        menu.show_all()
+        indicator.set_menu(menu)
+        self.tray = indicator
 
     # ─────────── Windows tray (pystray) ───────────
     def _tray_windows(self):
