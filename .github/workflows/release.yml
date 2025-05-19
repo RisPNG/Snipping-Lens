@@ -80,6 +80,11 @@ jobs:
           wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/releases/download/continuous/linuxdeploy-plugin-gtk-x86_64.AppImage -O linuxdeploy-plugin-gtk
           chmod +x linuxdeploy linuxdeploy-plugin-gtk
 
+      - name: Extract linuxdeploy (avoids FUSE issues)
+        run: |
+          ./linuxdeploy --appimage-extract
+          export PATH="$PWD/squashfs-root:$PATH"
+
       - name: Build standalone binary
         run: |
           pyinstaller --onefile \
@@ -97,9 +102,9 @@ jobs:
           cp dist/snipping_lens AppDir/usr/bin/SnippingLens
           chmod +x AppDir/usr/bin/SnippingLens
 
-          # desktop entry + icon
+          # Desktop entry and icon
           mkdir -p AppDir/usr/share/applications
-          cat > AppDir/usr/share/applications/snippinglens.desktop << EOL
+          cat > AppDir/usr/share/applications/snippinglens.desktop << 'EOL'
           [Desktop Entry]
           Name=Snipping Lens
           Exec=SnippingLens
@@ -114,12 +119,11 @@ jobs:
           cp my_icon.png AppDir/usr/share/icons/hicolor/64x64/apps/snippinglens.png
           cp my_icon.png AppDir/snippinglens.png
 
-          # Run linuxdeploy to bundle everything
-          ./linuxdeploy --appdir AppDir --plugin gtk --output appimage
+          # Bundle with linuxdeploy
+          linuxdeploy --appdir AppDir --plugin gtk --output appimage
 
-          # Rename AppImage to a stable filename
-          APPIMAGE=$(ls *.AppImage | head -n1)
-          mv "$APPIMAGE" SnippingLens.AppImage
+          # Rename to predictable filename
+          mv *.AppImage SnippingLens.AppImage
           echo "appimage_path=${GITHUB_WORKSPACE}/SnippingLens.AppImage" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v4
@@ -153,7 +157,7 @@ jobs:
           body="$(echo "$msg" | sed -n '/^~$/,/^~$/p' | sed '1d;$d')"
           prerelease=false
           if [[ "$ver" == *-* ]]; then prerelease=true; fi
-          echo "version=$ver"      >> "$GITHUB_OUTPUT"
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
           printf "body<<EOF\n%s\nEOF\n" "$body" >> "$GITHUB_OUTPUT"
           echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
 
