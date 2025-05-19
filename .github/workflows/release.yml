@@ -57,9 +57,9 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'  # Changed from 3.13 to 3.11 for better compatibility
+          python-version: '3.13'
 
-      - name: Install build tools & GTK/AppIndicator
+      - name: Install build tools & GTK/AppIndicator dependencies
         run: |
           sudo apt-get update -y
           sudo apt-get install -y \
@@ -70,43 +70,24 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
+      - name: Install FUSE support (optional)
+        run: |
+          sudo apt-get update && sudo apt-get install -y libfuse2 || true
+
+      - name: Fetch linuxdeploy & GTK plugin
+        run: |
+          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage -O linuxdeploy
+          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/releases/download/continuous/linuxdeploy-plugin-gtk-x86_64.AppImage -O linuxdeploy-plugin-gtk
+          chmod +x linuxdeploy linuxdeploy-plugin-gtk
+
       - name: Build standalone binary
         run: |
-          # Make sure we bundle the GI typelibs for AppIndicator
           pyinstaller --onefile \
             --name snipping_lens \
             --hidden-import=gi \
             --hidden-import=gi.repository.Gtk \
             --hidden-import=gi.repository.AppIndicator3 \
             snipping_lens.py
-
-      - name: Fetch linuxdeploy & appimagetool
-        run: |
-          # Retry mechanism for downloads
-          function download_with_retry {
-            local url=$1
-            local output=$2
-            local max_retries=3
-            local retry=0
-            
-            while [ $retry -lt $max_retries ]; do
-              echo "Downloading $url (attempt $(($retry+1)))"
-              if wget -q --show-progress "$url" -O "$output"; then
-                chmod +x "$output"
-                return 0
-              fi
-              retry=$(($retry+1))
-              echo "Download failed, retrying in 5 seconds..."
-              sleep 5
-            done
-            
-            echo "Failed to download $url after $max_retries attempts"
-            return 1
-          }
-          
-          download_with_retry "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage" "linuxdeploy-x86_64.AppImage"
-          download_with_retry "https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/releases/download/continuous/linuxdeploy-plugin-gtk-x86_64.AppImage" "linuxdeploy-plugin-gtk-x86_64.AppImage"
-          download_with_retry "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" "appimagetool-x86_64.AppImage"
 
       - name: Package AppImage
         id: buildapp
@@ -131,36 +112,14 @@ jobs:
 
           mkdir -p AppDir/usr/share/icons/hicolor/64x64/apps
           cp my_icon.png AppDir/usr/share/icons/hicolor/64x64/apps/snippinglens.png
-
-          # Ensure my_icon.png is also in AppDir root for the AppImage
           cp my_icon.png AppDir/snippinglens.png
 
-          # Build the AppImage with GTK plugin
-          export APPIMAGE_EXTRACT_AND_RUN=1
-          export GTK_USE_PORTAL=1
-          
-          # Debug information
-          echo "Current directory: $(pwd)"
-          echo "Files in current directory:"
-          ls -la
-          
-          # Modify PATH to include current directory
-          export PATH="$PATH:$(pwd)"
-          
-          # Run linuxdeploy with explicit path
-          ./linuxdeploy-x86_64.AppImage \
-            --appdir AppDir \
-            --plugin gtk \
-            --output appimage
+          # Run linuxdeploy to bundle everything
+          ./linuxdeploy --appdir AppDir --plugin gtk --output appimage
 
-          # rename to a predictable filename
-          APPIMAGE=$(ls *.AppImage | grep -v "linuxdeploy" | grep -v "appimagetool" | head -n1)
+          # Rename AppImage to a stable filename
+          APPIMAGE=$(ls *.AppImage | head -n1)
           mv "$APPIMAGE" SnippingLens.AppImage
-          
-          # Show the final file
-          ls -la SnippingLens.AppImage
-
-          # export path for the next step
           echo "appimage_path=${GITHUB_WORKSPACE}/SnippingLens.AppImage" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v4
@@ -176,8 +135,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # download both build artifacts
-      - uses: actions/download-artifact@v4
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
         with:
           name: SnippingLens-exe
           path: release_assets
