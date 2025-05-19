@@ -59,10 +59,13 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Install build tools
+      - name: Install build tools & GTK/AppIndicator
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y patchelf zsync
+          sudo apt-get install -y \
+            patchelf zsync \
+            python3-gi gir1.2-gtk-3.0 gir1.2-appindicator3-0.1 \
+            xclip
           pip install -r requirements.txt
           pip install pyinstaller
 
@@ -93,11 +96,11 @@ jobs:
           # build the AppImage
           ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
 
-          # detect and rename for consistency
+          # rename to a predictable filename
           APPIMAGE=$(ls *.AppImage | head -n1)
           mv "$APPIMAGE" SnippingLens.AppImage
 
-          # export path
+          # export path for the next step
           echo "appimage_path=${GITHUB_WORKSPACE}/SnippingLens.AppImage" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v4
@@ -113,7 +116,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # download artifacts
+      # download both build artifacts
       - uses: actions/download-artifact@v4
         with:
           name: SnippingLens-exe
