@@ -57,7 +57,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.13'
+          python-version: '3.11'  # Changed from 3.13 to 3.11 for better compatibility
 
       - name: Install build tools & GTK/AppIndicator
         run: |
@@ -82,10 +82,31 @@ jobs:
 
       - name: Fetch linuxdeploy & appimagetool
         run: |
-          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/releases/download/continuous/linuxdeploy-plugin-gtk-x86_64.AppImage
-          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
-          chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-gtk-x86_64.AppImage appimagetool-x86_64.AppImage
+          # Retry mechanism for downloads
+          function download_with_retry {
+            local url=$1
+            local output=$2
+            local max_retries=3
+            local retry=0
+            
+            while [ $retry -lt $max_retries ]; do
+              echo "Downloading $url (attempt $(($retry+1)))"
+              if wget -q --show-progress "$url" -O "$output"; then
+                chmod +x "$output"
+                return 0
+              fi
+              retry=$(($retry+1))
+              echo "Download failed, retrying in 5 seconds..."
+              sleep 5
+            done
+            
+            echo "Failed to download $url after $max_retries attempts"
+            return 1
+          }
+          
+          download_with_retry "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage" "linuxdeploy-x86_64.AppImage"
+          download_with_retry "https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/releases/download/continuous/linuxdeploy-plugin-gtk-x86_64.AppImage" "linuxdeploy-plugin-gtk-x86_64.AppImage"
+          download_with_retry "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" "appimagetool-x86_64.AppImage"
 
       - name: Package AppImage
         id: buildapp
@@ -115,17 +136,29 @@ jobs:
           cp my_icon.png AppDir/snippinglens.png
 
           # Build the AppImage with GTK plugin
-          APPIMAGE_EXTRACT_AND_RUN=1 \
-          GTK_USE_PORTAL=1 \
-          PATH="$PATH:$PWD" \
+          export APPIMAGE_EXTRACT_AND_RUN=1
+          export GTK_USE_PORTAL=1
+          
+          # Debug information
+          echo "Current directory: $(pwd)"
+          echo "Files in current directory:"
+          ls -la
+          
+          # Modify PATH to include current directory
+          export PATH="$PATH:$(pwd)"
+          
+          # Run linuxdeploy with explicit path
           ./linuxdeploy-x86_64.AppImage \
             --appdir AppDir \
             --plugin gtk \
             --output appimage
 
           # rename to a predictable filename
-          APPIMAGE=$(ls *.AppImage | head -n1)
+          APPIMAGE=$(ls *.AppImage | grep -v "linuxdeploy" | grep -v "appimagetool" | head -n1)
           mv "$APPIMAGE" SnippingLens.AppImage
+          
+          # Show the final file
+          ls -la SnippingLens.AppImage
 
           # export path for the next step
           echo "appimage_path=${GITHUB_WORKSPACE}/SnippingLens.AppImage" >> "$GITHUB_OUTPUT"
