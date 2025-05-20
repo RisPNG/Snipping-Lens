@@ -1,195 +1,300 @@
-name: Build and Release
+name: Build and Release Cross-Platform
 
 permissions:
-  contents: write
+  contents: write # Required to create a release and upload assets
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main # Adjust to your desired branch
 
 jobs:
-  # ─────────────────────────── WINDOWS BUILD ───────────────────────────
-  build_windows:
-    if: contains(github.event.head_commit.message, 'Release v')
+  check-release:
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check_commit.outputs.should_release }}
+      version: ${{ steps.extract_info.outputs.version }}
+      description: ${{ steps.extract_info.outputs.description }}
+      prerelease: ${{ steps.extract_info.outputs.prerelease }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Check commit message
+        id: check_commit
+        shell: bash
+        run: |
+          # Get the latest commit message
+          commit_msg=$(git log -1 --pretty=%B)
+          echo "Commit message:"
+          echo "$commit_msg"
+          
+          # Check if it contains "Release v"
+          if [[ "$commit_msg" == *"Release v"* ]]; then
+            echo "should_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract release info from commit message
+        id: extract_info
+        if: steps.check_commit.outputs.should_release == 'true'
+        shell: bash
+        run: |
+          # Get the latest commit message
+          commit_msg=$(git log -1 --pretty=%B)
+          
+          # Extract the version (matches digits and optional dash/letters)
+          version=$(echo "$commit_msg" | sed -n 's/.*Release v\([[:alnum:].\-]\+\).*/\1/p')
+          
+          # Extract the description between the tilde markers.
+          # This assumes the description is enclosed between lines containing only '~'
+          description=$(echo "$commit_msg" | sed -n '/^~$/,/^~$/p' | sed '1d;$d')
+
+          # Ensure a valid version was found
+          if [ -z "$version" ]; then
+            echo "No valid release version found in the commit message. Exiting."
+            exit 1
+          fi
+          
+          # Determine if it's a pre-release (if version contains a dash)
+          if echo "$version" | grep -q '-'; then
+            prerelease=true
+          else
+            prerelease=false
+          fi
+
+          echo "Version: $version"
+          echo "Description: $description"
+          echo "Prerelease: $prerelease"
+
+          # Set outputs using the environment file method.
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "description<<EOF" >> $GITHUB_OUTPUT
+          echo "$description" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "prerelease=$prerelease" >> $GITHUB_OUTPUT
+
+  build-windows:
+    needs: check-release
+    if: needs.check-release.outputs.should_release == 'true'
     runs-on: windows-latest
-    outputs:
-      exe_path: ${{ steps.pack.outputs.exe_path }}
-
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Set up Python 3.13.2
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.13.2"
 
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install pyinstaller
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
 
-      - name: Build EXE
-        id: pack
-        shell: bash
-        run: |
-          pyinstaller --onefile --windowed \
-            --name SnippingLens \
-            --icon my_icon.ico \
-            --add-data "my_icon.png;." \
-            snipping_lens.py
-          echo "exe_path=${GITHUB_WORKSPACE}/dist/SnippingLens.exe" >> "$GITHUB_OUTPUT"
+      - name: Install PyInstaller
+        run: pip install pyinstaller
 
-      - uses: actions/upload-artifact@v4
+      - name: Build executable
+        run: pyinstaller --onefile --windowed --name "Snipping Lens" --icon="my_icon.ico" --add-data="my_icon.png;." snipping_lens.py
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: SnippingLens-exe
-          path: ${{ steps.pack.outputs.exe_path }}
+          name: windows-exe
+          path: ./dist/Snipping Lens.exe
 
-  # ─────────────────────────── LINUX BUILD ────────────────────────────
-  build_linux:
-    if: contains(github.event.head_commit.message, 'Release v')
+  build-linux:
+    needs: check-release
+    if: needs.check-release.outputs.should_release == 'true'
     runs-on: ubuntu-latest
-    outputs:
-      appimage_path: ${{ steps.buildapp.outputs.appimage_path }}
-
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: '3.13'
+          python-version: "3.11"
 
-      - name: Install build tools & GTK/AppIndicator dependencies
+      - name: Install system dependencies
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y \
-            patchelf zsync \
-            python3-gi gir1.2-gtk-3.0 gir1.2-appindicator3-0.1 \
-            libappindicator3-dev \
-            xclip
-          pip install -r requirements.txt
-          pip install pyinstaller
+          sudo apt-get update
+          sudo apt-get install -y python3-gi python3-dev libcairo2-dev pkg-config python3-dev xclip
 
-      - name: Install FUSE support (optional)
-        run: |
-          sudo apt-get update && sudo apt-get install -y libfuse2 || true
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt pygobject
 
-      - name: Fetch linuxdeploy & GTK plugin
+      - name: Install AppImage tools
         run: |
-          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
-            -O linuxdeploy
-          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-gtk/releases/download/continuous/linuxdeploy-plugin-gtk-x86_64.AppImage \
-            -O linuxdeploy-plugin-gtk
-          chmod +x linuxdeploy linuxdeploy-plugin-gtk
+          sudo apt-get install -y fuse libfuse2
+          wget -q -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x appimagetool
 
-      - name: Extract linuxdeploy (avoids FUSE issues)
-        run: |
-          ./linuxdeploy --appimage-extract
-          export PATH="$PWD/squashfs-root:$PATH"
+      - name: Install PyInstaller
+        run: pip install pyinstaller
 
-      - name: Build standalone binary
+      - name: Build AppImage
         run: |
-          pyinstaller --onefile \
-            --name snipping_lens \
-            --hidden-import=gi \
-            --hidden-import=gi.repository.Gtk \
-            --hidden-import=gi.repository.AppIndicator3 \
-            snipping_lens.py
-
-      - name: Package AppImage
-        id: buildapp
-        shell: bash
-        run: |
+          # Create AppDir structure
           mkdir -p AppDir/usr/bin
-          cp dist/snipping_lens AppDir/usr/bin/SnippingLens
-          chmod +x AppDir/usr/bin/SnippingLens
-
-          # Desktop entry and icon
           mkdir -p AppDir/usr/share/applications
-          cat > AppDir/usr/share/applications/snippinglens.desktop << 'EOL'
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+          
+          # Build executable
+          pyinstaller --onefile --name snipping_lens snipping_lens.py
+          
+          # Copy executable and assets
+          cp dist/snipping_lens AppDir/usr/bin/
+          cp my_icon.png AppDir/usr/share/icons/hicolor/256x256/apps/snipping_lens.png
+          
+          # Create desktop file
+          cat > AppDir/usr/share/applications/snipping_lens.desktop << EOF
           [Desktop Entry]
-          Name=Snipping Lens
-          Exec=SnippingLens
           Type=Application
-          Icon=snippinglens
+          Name=Snipping Lens
+          Exec=snipping_lens
+          Icon=snipping_lens
           Categories=Utility;
-          StartupNotify=true
-          X-GNOME-UsesNotifications=true
-          EOL
+          Terminal=false
+          EOF
+          
+          # Create AppRun
+          cat > AppDir/AppRun << EOF
+          #!/bin/bash
+          SELF=\$(readlink -f "\$0")
+          HERE=\${SELF%/*}
+          export PATH="\${HERE}/usr/bin:\${PATH}"
+          export LD_LIBRARY_PATH="\${HERE}/usr/lib:\${LD_LIBRARY_PATH}"
+          export XDG_DATA_DIRS="\${HERE}/usr/share:\${XDG_DATA_DIRS}"
+          exec "\${HERE}/usr/bin/snipping_lens" "\$@"
+          EOF
+          
+          chmod +x AppDir/AppRun
+          
+          # Generate AppImage
+          ./appimagetool AppDir
+          
+          # Rename the AppImage
+          mv Snipping_Lens-x86_64.AppImage SnippingLens-${{ needs.check-release.outputs.version }}-x86_64.AppImage
 
-          mkdir -p AppDir/usr/share/icons/hicolor/64x64/apps
-          cp my_icon.png AppDir/usr/share/icons/hicolor/64x64/apps/snippinglens.png
-          cp my_icon.png AppDir/snippinglens.png
-
-          # Bundle with linuxdeploy
-          linuxdeploy --appdir AppDir --plugin gtk --output appimage
-
-          # Rename to predictable filename
-          mv *.AppImage SnippingLens.AppImage
-          echo "appimage_path=${GITHUB_WORKSPACE}/SnippingLens.AppImage" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: SnippingLens-appimage
-          path: ${{ steps.buildapp.outputs.appimage_path }}
-
-  # ─────────────────────────── CREATE RELEASE ──────────────────────────
-  release:
-    needs: [ build_windows, build_linux ]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: SnippingLens-exe
-          path: release_assets
-      - uses: actions/download-artifact@v4
-        with:
-          name: SnippingLens-appimage
-          path: release_assets
-
-      - id: meta
-        shell: bash
+      - name: Build DEB package
         run: |
-          msg="$(git log -1 --pretty=%B)"
-          ver="$(echo "$msg" | sed -n 's/.*Release v\([[:alnum:].\-]\+\).*/\1/p')"
-          body="$(echo "$msg" | sed -n '/^~$/,/^~$/p' | sed '1d;$d')"
-          prerelease=false
-          if [[ "$ver" == *-* ]]; then prerelease=true; fi
-          echo "version=$ver" >> "$GITHUB_OUTPUT"
-          printf "body<<EOF\n%s\nEOF\n" "$body" >> "$GITHUB_OUTPUT"
-          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+          # Create package structure
+          mkdir -p debian/DEBIAN
+          mkdir -p debian/usr/bin
+          mkdir -p debian/usr/share/applications
+          mkdir -p debian/usr/share/icons/hicolor/256x256/apps
+          mkdir -p debian/etc/xdg/autostart
+          
+          # Copy executable and assets
+          cp dist/snipping_lens debian/usr/bin/
+          cp my_icon.png debian/usr/share/icons/hicolor/256x256/apps/snipping_lens.png
+          
+          # Create desktop file
+          cat > debian/usr/share/applications/snipping_lens.desktop << EOF
+          [Desktop Entry]
+          Type=Application
+          Name=Snipping Lens
+          Exec=/usr/bin/snipping_lens
+          Icon=/usr/share/icons/hicolor/256x256/apps/snipping_lens.png
+          Categories=Utility;
+          Terminal=false
+          EOF
+          
+          # Create autostart file
+          cp debian/usr/share/applications/snipping_lens.desktop debian/etc/xdg/autostart/
+          
+          # Create control file
+          cat > debian/DEBIAN/control << EOF
+          Package: snipping-lens
+          Version: ${{ needs.check-release.outputs.version }}
+          Section: utils
+          Priority: optional
+          Architecture: amd64
+          Depends: python3, python3-gi, xclip
+          Maintainer: Your Name <your.email@example.com>
+          Description: Snipping Lens
+           A tool to automatically search screenshots with Google Lens.
+          EOF
+          
+          # Create postinst script to set permissions
+          cat > debian/DEBIAN/postinst << EOF
+          #!/bin/sh
+          chmod +x /usr/bin/snipping_lens
+          exit 0
+          EOF
+          
+          chmod 755 debian/DEBIAN/postinst
+          
+          # Build the package
+          dpkg-deb --build debian
+          
+          # Rename the package
+          mv debian.deb snipping-lens_${{ needs.check-release.outputs.version }}_amd64.deb
 
-      - name: Create GitHub Release
-        id: create_rel
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-packages
+          path: |
+            SnippingLens-${{ needs.check-release.outputs.version }}-x86_64.AppImage
+            snipping-lens_${{ needs.check-release.outputs.version }}_amd64.deb
+
+  create-release:
+    needs: [check-release, build-windows, build-linux]
+    if: needs.check-release.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: windows-exe
+          path: ./windows
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: linux-packages
+          path: ./linux
+
+      - name: Create Release
+        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.meta.outputs.version }}
-          release_name: v${{ steps.meta.outputs.version }}
-          body: ${{ steps.meta.outputs.body }}
-          prerelease: ${{ steps.meta.outputs.prerelease }}
+          tag_name: v${{ needs.check-release.outputs.version }}
+          release_name: "v${{ needs.check-release.outputs.version }}"
+          body: ${{ needs.check-release.outputs.description }}
+          draft: false
+          prerelease: ${{ needs.check-release.outputs.prerelease }}
 
-      - name: Upload Windows EXE
+      - name: Upload Windows Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_rel.outputs.upload_url }}
-          asset_path: release_assets/SnippingLens.exe
-          asset_name: SnippingLens.exe
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: "./windows/Snipping Lens.exe"
+          asset_name: SnippingLens-Windows.exe
           asset_content_type: application/octet-stream
 
-      - name: Upload Linux AppImage
+      - name: Upload Linux AppImage Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_rel.outputs.upload_url }}
-          asset_path: release_assets/SnippingLens.AppImage
-          asset_name: SnippingLens.AppImage
-          asset_content_type: application/octet-stream
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: "./linux/SnippingLens-${{ needs.check-release.outputs.version }}-x86_64.AppImage"
+          asset_name: SnippingLens-${{ needs.check-release.outputs.version }}-x86_64.AppImage
+          asset_content_type: application/x-executable
+
+      - name: Upload Linux DEB Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: "./linux/snipping-lens_${{ needs.check-release.outputs.version }}_amd64.deb"
+          asset_name: snipping-lens_${{ needs.check-release.outputs.version }}_amd64.deb
+          asset_content_type: application/vnd.debian.binary-package

@@ -1,4 +1,10 @@
+# Core dependencies (both platforms)
 Pillow==11.1.0
 psutil==7.0.0
-pystray==0.19.5
 Requests==2.32.3
+
+# Windows-specific dependencies
+pystray==0.19.5; platform_system == "Windows"
+
+# Linux-specific dependencies
+PyGObject==3.46.0; platform_system == "Linux"
