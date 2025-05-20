@@ -122,7 +122,11 @@ jobs:
       - name: Build AppImage
         run: |
           mkdir -p AppDir/usr/bin AppDir/usr/share/applications AppDir/usr/share/icons/hicolor/256x256/apps
+
+          # Build executable
           pyinstaller --onefile --name snipping_lens snipping_lens.py
+
+          # Copy binary and icon into AppDir
           cp dist/snipping_lens AppDir/usr/bin/
           cp my_icon.png AppDir/usr/share/icons/hicolor/256x256/apps/snipping_lens.png
 
@@ -137,8 +141,9 @@ jobs:
           Terminal=false
           EOF
 
-          # Copy desktop file into AppDir root (required by appimagetool)
+          # Copy desktop file & icon into AppDir root (required by appimagetool)
           cp AppDir/usr/share/applications/snipping_lens.desktop AppDir/snipping_lens.desktop
+          cp my_icon.png AppDir/snipping_lens.png
 
           # Create AppRun
           cat > AppDir/AppRun << EOF
