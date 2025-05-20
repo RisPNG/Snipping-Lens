@@ -19,6 +19,14 @@ if platform.system() == "Windows":
 else:  # Linux
     import gi
     gi.require_version('Gtk', '3.0')
+    # Add XApp support for Linux Mint
+    try:
+        gi.require_version('XApp', '1.0')
+        from gi.repository import XApp
+        XAPP_AVAILABLE = True
+    except (ImportError, ValueError):
+        XAPP_AVAILABLE = False
+    
     from gi.repository import Gtk, GLib, GdkPixbuf
     from PIL import Image, ImageDraw, UnidentifiedImageError
     import io
@@ -66,6 +74,7 @@ class SnippingLens:
         self.is_running = True
         self.is_paused = False  # New pause state
         self.icon = None
+        self.xapp_status_icon = None  # Add XApp status icon
         # --- State for process detection ---
         self.last_snip_process_seen_time = 0.0
         self.process_state_lock = threading.Lock()  # Lock for accessing shared time variable
@@ -230,27 +239,84 @@ class SnippingLens:
         self.icon.run()
 
     def _run_linux_tray_icon(self, icon_image):
-        """Run the Linux system tray icon."""
-        # Convert PIL image to GdkPixbuf
-        data = io.BytesIO()
-        icon_image.save(data, format='PNG')
-        loader = GdkPixbuf.PixbufLoader.new_with_type('png')
-        loader.write(data.getvalue())
-        loader.close()
-        pixbuf = loader.get_pixbuf()
+        """Run the Linux system tray icon with XApp support for Linux Mint."""
+        # First, try XApp status icon if available (Linux Mint)
+        if XAPP_AVAILABLE:
+            try:
+                # Convert PIL image to GdkPixbuf
+                data = io.BytesIO()
+                icon_image.save(data, format='PNG')
+                loader = GdkPixbuf.PixbufLoader.new_with_type('png')
+                loader.write(data.getvalue())
+                loader.close()
+                pixbuf = loader.get_pixbuf()
+                
+                # Create XApp status icon
+                self.xapp_status_icon = XApp.StatusIcon()
+                self.xapp_status_icon.set_icon_name("snipping_lens")  # Icon name registered in the system
+                self.xapp_status_icon.set_tooltip_text("Snipping Lens")
+                self.xapp_status_icon.set_primary_menu(self._create_linux_menu_items())
+                self.xapp_status_icon.set_secondary_menu(self._create_linux_menu_items())
+                
+                # Set the icon from the pixbuf
+                # This is usually not needed if the icon is already registered in the system
+                # But we'll set it directly to ensure it's displayed
+                self.xapp_status_icon.set_icon_from_pixbuf(pixbuf)
+                
+                # Connect click handler
+                self.xapp_status_icon.connect('activate', lambda icon: self.launch_snipping_tool())
+                
+                # This metadata helps with XApp identifying the icon
+                self.xapp_status_icon.set_name("SnippingLens")
+                self.xapp_status_icon.set_title("Snipping Lens")
+                
+                logging.info("Running XApp status icon for Linux Mint.")
+                
+                # Save icon to system cache to help with icon discovery
+                cache_dir = os.path.expanduser("~/.cache/snipping_lens")
+                os.makedirs(cache_dir, exist_ok=True)
+                icon_path = os.path.join(cache_dir, "snipping_lens.png")
+                icon_image.save(icon_path)
+                
+                # Register with linux icon theme system
+                os.makedirs(os.path.expanduser("~/.local/share/icons/hicolor/48x48/apps"), exist_ok=True)
+                icon_theme_path = os.path.expanduser("~/.local/share/icons/hicolor/48x48/apps/snipping_lens.png")
+                if not os.path.exists(icon_theme_path):
+                    icon_image.save(icon_theme_path)
+                    logging.info(f"Registered icon with theme system: {icon_theme_path}")
+                
+                Gtk.main()
+                return
+                
+            except Exception as xapp_err:
+                logging.error(f"Failed to create XApp status icon: {xapp_err}. Falling back to standard GTK.")
         
-        self.linux_status_icon = Gtk.StatusIcon()
-        self.linux_status_icon.set_from_pixbuf(pixbuf)
-        self.linux_status_icon.set_tooltip_text("Snipping Lens")
-        self.linux_status_icon.connect('popup-menu', self._show_linux_menu)
-        self.linux_status_icon.connect('activate', lambda icon: self.launch_snipping_tool())
-        
-        # Set the AppIndicator name for XApp Status Applet
-        self.linux_status_icon.set_name("SnippingLens")
-        self.linux_status_icon.set_title("Snipping Lens")
-        
-        logging.info("Running Linux system tray icon.")
-        Gtk.main()
+        # Fallback to standard GTK StatusIcon if XApp is not available
+        try:
+            # Convert PIL image to GdkPixbuf
+            data = io.BytesIO()
+            icon_image.save(data, format='PNG')
+            loader = GdkPixbuf.PixbufLoader.new_with_type('png')
+            loader.write(data.getvalue())
+            loader.close()
+            pixbuf = loader.get_pixbuf()
+            
+            self.linux_status_icon = Gtk.StatusIcon()
+            self.linux_status_icon.set_from_pixbuf(pixbuf)
+            self.linux_status_icon.set_tooltip_text("Snipping Lens")
+            self.linux_status_icon.connect('popup-menu', self._show_linux_menu)
+            self.linux_status_icon.connect('activate', lambda icon: self.launch_snipping_tool())
+            
+            # Set the AppIndicator name for XApp Status Applet
+            self.linux_status_icon.set_name("SnippingLens")
+            self.linux_status_icon.set_title("Snipping Lens")
+            
+            logging.info("Running Linux system tray icon (GTK fallback).")
+            Gtk.main()
+        except Exception as gtk_err:
+            logging.error(f"Failed to create GTK status icon: {gtk_err}")
+            print("\nError: Could not create system tray icon with either XApp or GTK.")
+            self.exit_app()
 
     def _show_linux_menu(self, icon, button, time):
         """Show the Linux system tray menu."""
