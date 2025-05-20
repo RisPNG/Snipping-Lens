@@ -98,7 +98,7 @@ jobs:
         run: pyinstaller --onefile --windowed --name "Snipping Lens" --icon="my_icon.ico" --add-data="my_icon.png;." snipping_lens.py
 
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: windows-exe
           path: ./dist/Snipping Lens.exe
@@ -233,7 +233,7 @@ jobs:
           mv debian.deb snipping-lens_${{ needs.check-release.outputs.version }}_amd64.deb
 
       - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: linux-packages
           path: |
@@ -246,13 +246,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download Windows artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: windows-exe
           path: ./windows
 
       - name: Download Linux artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: linux-packages
           path: ./linux
