@@ -1,4 +1,4 @@
-name: Build and Release EXE and AppImage
+name: Build and Release Cross-Platform
 
 permissions:
   contents: write # Required to create a release and upload assets
@@ -9,20 +9,19 @@ on:
       - main # Adjust to your desired branch
 
 jobs:
-  build_windows:
+  build-windows:
+    # Only run if the commit message contains "Release v"
     if: contains(github.event.head_commit.message, 'Release v')
     runs-on: windows-latest
-    outputs:
-      asset_path: ./dist/Snipping Lens.exe
-      asset_name: SnippingLens.exe
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Python 3.13.2
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.11" # Using a common stable version
+          python-version: "3.13.2"
 
       - name: Install Dependencies
         run: pip install -r requirements.txt
@@ -31,188 +30,237 @@ jobs:
         run: pip install pyinstaller
 
       - name: Build Windows executable
-        # Assuming my_icon.ico is in the root of your repository
         run: pyinstaller --onefile --windowed --name "Snipping Lens" --icon="my_icon.ico" --add-data="my_icon.png;." snipping_lens.py
 
-      - name: Verify artifact
-        run: |
-          if (Test-Path -Path "./dist/Snipping Lens.exe") {
-            echo "Windows EXE built successfully."
-          } else {
-            echo "Error: Windows EXE not found!"
-            exit 1
-          }
-          
-  build_linux:
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: "./dist/Snipping Lens.exe"
+
+  build-linux:
+    # Only run if the commit message contains "Release v"
     if: contains(github.event.head_commit.message, 'Release v')
     runs-on: ubuntu-latest
-    outputs:
-      asset_path: ./SnippingLens-x86_64.AppImage # Default name from linuxdeploy
-      asset_name: SnippingLens.AppImage
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Python 3.13.2
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: "3.13.2"
 
-      - name: Install System Dependencies for AppImage
+      - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libfuse2 # Needed to run AppImages created by older tools, and sometimes linuxdeploy itself
+          sudo apt-get install -y xclip python3-tk python3-dev build-essential
 
-      - name: Install Python Dependencies
+      - name: Install Python dependencies
         run: pip install -r requirements.txt
 
       - name: Install PyInstaller
         run: pip install pyinstaller
 
-      - name: Download linuxdeploy and Python plugin
-        run: |
-          wget -c https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-          wget -c https://github.com/linuxdeploy/linuxdeploy-plugin-python/releases/download/continuous/linuxdeploy-plugin-python-x86_64.AppImage
-          chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-python-x86_64.AppImage
+      - name: Build Linux executable
+        run: pyinstaller --onefile --name "snipping-lens" --add-data="my_icon.png:." snipping_lens.py
 
-      - name: Build with PyInstaller for Linux
-        run: |
-          pyinstaller --noconsole --onefile --name "snipping-lens-bin" --add-data="my_icon.png:." snipping_lens.py
-          # The output will be in dist/snipping-lens-bin
-
-      - name: Prepare AppDir
+      - name: Create AppImage structure
         run: |
           mkdir -p AppDir/usr/bin
-          cp dist/snipping-lens-bin AppDir/usr/bin/snipping-lens
-          cp my_icon.png AppDir/my_icon.png # linuxdeploy will pick this up with --icon-file
-
-          # Create .desktop file
-          cat <<EOF > AppDir/snipping-lens.desktop
+          mkdir -p AppDir/usr/share/applications
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+          
+          # Copy executable
+          cp dist/snipping-lens AppDir/usr/bin/
+          
+          # Create desktop file
+          cat > AppDir/usr/share/applications/snipping-lens.desktop << 'EOF'
           [Desktop Entry]
+          Type=Application
           Name=Snipping Lens
           Exec=snipping-lens
-          Icon=my_icon
-          Type=Application
-          Categories=Utility;Graphics;
-          Comment=Screenshot tool with Google Lens integration
+          Icon=snipping-lens
+          Comment=Automatic Google Lens search for screenshots
+          Categories=Graphics;Photography;
+          Keywords=screenshot;lens;search;
+          StartupNotify=true
           EOF
-          chmod +x AppDir/usr/bin/snipping-lens
+          
+          # Copy icon (convert PNG to different sizes if needed)
+          cp my_icon.png AppDir/usr/share/icons/hicolor/256x256/apps/snipping-lens.png
+          
+          # Create AppRun
+          cat > AppDir/AppRun << 'EOF'
+          #!/bin/bash
+          HERE="$(dirname "$(readlink -f "${0}")")"
+          export PATH="${HERE}/usr/bin:${PATH}"
+          exec "${HERE}/usr/bin/snipping-lens" "$@"
+          EOF
+          chmod +x AppDir/AppRun
+          
+          # Create symbolic links required by AppImage
+          ln -sf usr/share/applications/snipping-lens.desktop AppDir/
+          ln -sf usr/share/icons/hicolor/256x256/apps/snipping-lens.png AppDir/
 
-      - name: Run linuxdeploy to create AppImage
-        env:
-          APPIMAGE_EXTRACT_AND_RUN: 1 # For running plugin AppImage
-          VERSION: ${{ steps.extract_info.outputs.version }} # Get version from release job (or re-extract here)
-                                                              # For now, let linuxdeploy auto-version or set a fixed one if needed
-                                                              # Or extract version here if create_release job is separate
+      - name: Download and setup AppImageTool
         run: |
-          # Ensure plugin is found
-          export PATH=$PATH:$(pwd) 
-          ./linuxdeploy-x86_64.AppImage \
-            --appdir AppDir \
-            --output appimage \
-            --plugin python \
-            --executable AppDir/usr/bin/snipping-lens \
-            --desktop-file AppDir/snipping-lens.desktop \
-            --icon-file AppDir/my_icon.png
-          # AppImage will be named like SnippingLens-x86_64.AppImage or similar by default
+          wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
 
-      - name: Verify and Rename AppImage
+      - name: Create AppImage
         run: |
-          find . -name "*.AppImage" -print0 | xargs -0 -I {} mv {} ./SnippingLens-x86_64.AppImage
-          if [ -f "./SnippingLens-x86_64.AppImage" ]; then
-            echo "AppImage built successfully."
-            # Store the actual name for upload if it's dynamic
-            # echo "appimage_name=$(find . -name '*.AppImage' -printf '%f')" >> $GITHUB_ENV
-          else
-            echo "Error: AppImage not found!"
-            ls -R . # List files for debugging
-            exit 1
+          ./appimagetool-x86_64.AppImage AppDir SnippingLens-x86_64.AppImage
+          chmod +x SnippingLens-x86_64.AppImage
+
+      - name: Create DEB package structure
+        run: |
+          # Create debian package structure
+          mkdir -p deb-package/DEBIAN
+          mkdir -p deb-package/usr/bin
+          mkdir -p deb-package/usr/share/applications
+          mkdir -p deb-package/usr/share/icons/hicolor/256x256/apps
+          mkdir -p deb-package/usr/share/doc/snipping-lens
+          
+          # Copy executable
+          cp dist/snipping-lens deb-package/usr/bin/
+          chmod +x deb-package/usr/bin/snipping-lens
+          
+          # Copy desktop file
+          cp AppDir/usr/share/applications/snipping-lens.desktop deb-package/usr/share/applications/
+          
+          # Copy icon
+          cp my_icon.png deb-package/usr/share/icons/hicolor/256x256/apps/snipping-lens.png
+          
+          # Create copyright file
+          cat > deb-package/usr/share/doc/snipping-lens/copyright << 'EOF'
+          Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+          Upstream-Name: snipping-lens
+          Source: https://github.com/yourusername/snipping-lens
+          
+          Files: *
+          Copyright: $(date +%Y) Your Name
+          License: MIT
+          EOF
+          
+          # Create control file
+          cat > deb-package/DEBIAN/control << 'EOF'
+          Package: snipping-lens
+          Version: 1.0.0
+          Section: graphics
+          Priority: optional
+          Architecture: amd64
+          Depends: python3, python3-pil, python3-requests, xclip, gnome-screenshot
+          Maintainer: Your Name <your.email@example.com>
+          Description: Automatic Google Lens search for screenshots
+           Snipping Lens automatically detects when you take screenshots
+           and searches them using Google Lens for quick information lookup.
+           .
+           Features:
+           - Cross-platform support (Windows and Linux)
+           - Automatic screenshot detection
+           - Google Lens integration
+           - System tray integration
+          EOF
+          
+          # Create postinst script
+          cat > deb-package/DEBIAN/postinst << 'EOF'
+          #!/bin/bash
+          set -e
+          
+          # Update desktop database
+          if command -v update-desktop-database >/dev/null 2>&1; then
+              update-desktop-database -q /usr/share/applications
           fi
+          
+          # Update icon cache
+          if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+              gtk-update-icon-cache -q /usr/share/icons/hicolor
+          fi
+          
+          exit 0
+          EOF
+          chmod +x deb-package/DEBIAN/postinst
+          
+          # Create prerm script
+          cat > deb-package/DEBIAN/prerm << 'EOF'
+          #!/bin/bash
+          set -e
+          
+          # Kill any running instances
+          pkill -f snipping-lens || true
+          
+          exit 0
+          EOF
+          chmod +x deb-package/DEBIAN/prerm
 
-  create_github_release:
-    if: contains(github.event.head_commit.message, 'Release v')
-    runs-on: ubuntu-latest
-    needs: [build_windows, build_linux] # Depends on both build jobs
-    steps:
-      - name: Checkout repository (for commit message)
-        uses: actions/checkout@v4
+      - name: Build DEB package
+        run: |
+          dpkg-deb --build deb-package snipping-lens.deb
+
+      - name: Upload Linux AppImage artifact
+        uses: actions/upload-artifact@v4
         with:
-          fetch-depth: 1 # Only need the latest commit
+          name: linux-appimage
+          path: "SnippingLens-x86_64.AppImage"
+
+      - name: Upload Linux DEB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-deb
+          path: "snipping-lens.deb"
+
+  release:
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Extract release info from commit message
         id: extract_release_info
         shell: bash
         run: |
+          # Get the latest commit message
           commit_msg=$(git log -1 --pretty=%B)
-          echo "Commit message: $commit_msg"
+          echo "Commit message:"
+          echo "$commit_msg"
+        
+          # Extract the version (matches digits and optional dash/letters)
           version=$(echo "$commit_msg" | sed -n 's/.*Release v\([[:alnum:].\-]\+\).*/\1/p')
+        
+          # Extract the description between the tilde markers.
+          # This assumes the description is enclosed between lines containing only '~'
           description=$(echo "$commit_msg" | sed -n '/^~$/,/^~$/p' | sed '1d;$d')
 
+          # Ensure a valid version was found
           if [ -z "$version" ]; then
-            echo "No valid release version found in commit message. Exiting."
+            echo "No valid release version found in the commit message. Exiting."
             exit 1
           fi
-          
-          prerelease=false
+        
+          # Determine if it's a pre-release (if version contains a dash)
           if echo "$version" | grep -q '-'; then
             prerelease=true
+          else
+            prerelease=false
           fi
 
           echo "Version: $version"
           echo "Description: $description"
           echo "Prerelease: $prerelease"
 
+          # Set outputs using the environment file method.
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "description<<EOF" >> $GITHUB_OUTPUT
           echo "$description" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           echo "prerelease=$prerelease" >> $GITHUB_OUTPUT
 
-      - name: Download Windows Artifact
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
-        with:
-          name: artifact # Default artifact name if not specified in upload by build_windows
-          path: ./dist_windows/
-          # This assumes build_windows uploads an artifact named 'SnippingLens-Windows-Artifact' or similar
-          # Let's adjust build jobs to upload artifacts explicitly named
-
-      # Corrected artifact download: Need to know how build jobs upload them.
-      # For simplicity, let's assume paths from 'outputs' of build jobs are directly usable
-      # if jobs run on same runner or artifacts are passed correctly.
-      # The current setup with 'outputs' from build jobs is for asset paths, not for artifact download.
-      # We need to upload artifacts in build jobs and download them here.
-
-      # --- Revised Artifact Handling ---
-      # In build_windows:
-      # - name: Upload Windows Artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: windows-build
-      #     path: ${{ steps.build_windows.outputs.asset_path }} # Or directly ./dist/Snipping Lens.exe
-
-      # In build_linux:
-      # - name: Upload Linux Artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: linux-build
-      #     path: ${{ steps.build_linux.outputs.asset_path }} # Or directly ./SnippingLens-x86_64.AppImage
-
-      # Then in create_github_release:
-      - name: Download Windows Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-build # This name must match the upload-artifact name in build_windows
-          path: ./release_assets/windows
-
-      - name: Download Linux Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-build # This name must match the upload-artifact name in build_linux
-          path: ./release_assets/linux
-      # --- End Revised Artifact Handling ---
-
-      - name: List downloaded assets
-        run: ls -R ./release_assets
 
       - name: Create Release
         id: create_release
@@ -221,8 +269,42 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ steps.extract_release_info.outputs.version }}
-          release_name: "Release v${{ steps.extract_release_info.outputs.version }}"
-          body: ${{ steps.extract_release_info.outputs.description }}
+          release_name: "v${{ steps.extract_release_info.outputs.version }}"
+          body: |
+            ${{ steps.extract_release_info.outputs.description }}
+            
+            ## Downloads
+            
+            ### Windows
+            - **SnippingLens.exe** - Standalone executable for Windows
+            
+            ### Linux
+            - **SnippingLens-x86_64.AppImage** - Universal Linux application (no installation required)
+            - **snipping-lens.deb** - Debian/Ubuntu package
+            
+            ## Installation Instructions
+            
+            ### Windows
+            1. Download `SnippingLens.exe`
+            2. Run the executable
+            3. The app will start in the system tray
+            
+            ### Linux (AppImage)
+            1. Download `SnippingLens-x86_64.AppImage`
+            2. Make it executable: `chmod +x SnippingLens-x86_64.AppImage`
+            3. Run: `./SnippingLens-x86_64.AppImage`
+            
+            ### Linux (DEB package)
+            1. Download `snipping-lens.deb`
+            2. Install: `sudo dpkg -i snipping-lens.deb`
+            3. Fix dependencies if needed: `sudo apt-get install -f`
+            4. Run from applications menu or terminal: `snipping-lens`
+            
+            ## Usage
+            - **Left-click** the tray icon to take a screenshot
+            - **Right-click** the tray icon for options (Pause/Resume, Show Logs, Exit)
+            - Screenshots are automatically detected and searched on Google Lens
+            - The app starts automatically with your system
           draft: false
           prerelease: ${{ steps.extract_release_info.outputs.prerelease }}
 
@@ -232,33 +314,26 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release_assets/windows/Snipping Lens.exe # Path after download
+          asset_path: "./windows-exe/Snipping Lens.exe"
           asset_name: SnippingLens.exe
           asset_content_type: application/octet-stream
 
-      - name: Upload Linux Release Asset
+      - name: Upload Linux AppImage Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release_assets/linux/SnippingLens-x86_64.AppImage # Path after download
-          asset_name: SnippingLens.AppImage
-          asset_content_type: application/vnd.appimage # Correct content type for AppImage
+          asset_path: "./linux-appimage/SnippingLens-x86_64.AppImage"
+          asset_name: SnippingLens-x86_64.AppImage
+          asset_content_type: application/octet-stream
 
-# Add these steps to your build jobs:
-# In build_windows, after "Build Windows executable":
-#      - name: Upload Windows Artifact
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: windows-build
-#          path: ./dist/Snipping Lens.exe 
-#          retention-days: 1
-
-# In build_linux, after "Verify and Rename AppImage":
-#      - name: Upload Linux Artifact
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: linux-build
-#          path: ./SnippingLens-x86_64.AppImage
-#          retention-days: 1
+      - name: Upload Linux DEB Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: "./linux-deb/snipping-lens.deb"
+          asset_name: snipping-lens.deb
+          asset_content_type: application/octet-stream
