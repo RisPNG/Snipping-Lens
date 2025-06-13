@@ -371,24 +371,28 @@ Comment=Automatic Google Lens search for screenshots
     def get_google_lens_url(self, image_path):
         """Upload image to Catbox and get Google Lens URL"""
         try:
-            catbox_url = "https://catbox.moe/user/api.php"
+            litterbox_url = "https://litterbox.catbox.moe/resources/internals/api.php"
             filename = os.path.basename(image_path)
-            logging.info(f"Uploading {image_path} to Catbox.moe...")
+            logging.info(f"Uploading {image_path} to Litterbox...")
             
             with open(image_path, 'rb') as f:
-                payload = {'reqtype': (None, 'fileupload'), 'userhash': (None, '')}
+                payload = {'reqtype': (None, 'fileupload'), 'time': (None, '1h')}
                 files = {'fileToUpload': (filename, f)}
                 headers = {'User-Agent': 'SnippingLensScript/1.0'}
-                response = requests.post(catbox_url, files=files, data=payload, headers=headers, timeout=60)
+                response = requests.post(litterbox_url, files=files, data=payload, headers=headers, timeout=60)
             
             response.raise_for_status()
-            catbox_link = response.text.strip()
+            litterbox_link = response.text.strip()
             
-            if response.status_code == 200 and catbox_link.startswith('https://files.catbox.moe/'):
-                logging.info(f"Image uploaded: {catbox_link}")
-                return f"https://lens.google.com/uploadbyurl?url={catbox_link}"
+            if response.status_code == 200 and litterbox_link.startswith('https://litterbox.catbox.moe/'):
+                logging.info(f"Image uploaded: {litterbox_link}")
+                return f"https://lens.google.com/uploadbyurl?url={litterbox_link}"
+            elif response.status_code == 200 and litterbox_link.startswith('https://files.catbox.moe/'):
+                # Litterbox may return a catbox.moe file link
+                logging.info(f"Image uploaded: {litterbox_link}")
+                return f"https://lens.google.com/uploadbyurl?url={litterbox_link}"
             else:
-                logging.error(f"Failed Catbox upload. Status: {response.status_code}, Response: {response.text[:200]}...")
+                logging.error(f"Failed Litterbox upload. Status: {response.status_code}, Response: {response.text[:200]}...")
                 return None
         except requests.exceptions.Timeout:
             logging.error("Catbox upload timed out.")

@@ -49,7 +49,7 @@ Snipping Lens is a cross-platform application that automatically detects when yo
 
 #### Option 3: Manual Installation
 1. Download the source code
-2. Run the installation script: `bash install-linux.sh`
+2. Run the installation script: `bash build-linux.sh`
 3. Follow the on-screen instructions
 
 ## Usage
@@ -88,12 +88,11 @@ Use the Pause feature when you need to take screenshots without automatically op
 - gnome-screenshot package
 - Internet connection for Google Lens
 
-## Privacy & Security
+## FAQ
 
-- Screenshots are temporarily uploaded to Catbox.moe (a free image hosting service) to generate Google Lens URLs
-- Temporary files are automatically deleted after processing
-- No screenshots are stored permanently by this application
-- The application only processes screenshots taken after snipping tools are detected running
+### Where are my screenshots uploaded? Are they stored permanently?
+
+Screenshots are uploaded to [Litterbox](https://litterbox.catbox.moe/), a free and anonymous image hosting service, solely for the purpose of generating a URL that can be used with Google Lens. Images uploaded to Litterbox are not stored permanently—they automatically expire and are deleted after 1 hour. No user information is attached to the upload, and the application does not keep any record of your screenshots.
 
 ## Troubleshooting
 
@@ -110,16 +109,6 @@ sudo apt install xfce4-indicator-plugin
 ```
 
 Or use the XApp Status Applet (pre-installed on Linux Mint).
-
-### Windows: App not starting automatically
-The application should automatically add itself to Windows startup. If not, you can manually add it through:
-1. Win+R → `shell:startup`
-2. Copy the executable to the startup folder
-
-### General: Screenshots not being detected
-1. Check if the application is paused (right-click tray icon)
-2. View logs (right-click tray icon → Show Logs)
-3. Ensure you're using supported screenshot tools
 
 ## Development
 
@@ -139,13 +128,6 @@ pip install pyinstaller
 pyinstaller --onefile --name "snipping-lens" --add-data="my_icon.png:." snipping_lens.py
 ```
 
-### Dependencies
-- Pillow (PIL)
-- psutil
-- pystray
-- requests
-- xclip (Linux only, system package)
-
 ## Contributing
 
 1. Fork the repository
@@ -154,41 +136,9 @@ pyinstaller --onefile --name "snipping-lens" --add-data="my_icon.png:." snipping
 4. Test on both Windows and Linux if possible
 5. Submit a pull request
 
-## Release Process
-
-To trigger a release build, commit with a message containing "Release v" followed by the version number:
-
-```
-Release v1.0.0
-
-~
-- New feature: Cross-platform support
-- New feature: Pause/Resume functionality  
-- New feature: Log viewing
-- Improved: Better screenshot detection
-- Fixed: Various bug fixes
-~
-```
-
-The GitHub Actions workflow will automatically:
-- Build Windows executable
-- Build Linux AppImage and DEB package
-- Create a GitHub release with all artifacts
-
 ## License
 
 MIT License - see LICENSE file for details
-
-## Changelog
-
-### v1.0.0
-- ✨ Cross-platform support (Windows + Linux Mint Debian Edition)
-- ✨ Left-click tray icon to take screenshots
-- ✨ Pause/Resume functionality
-- ✨ Log viewing capability
-- ✨ Improved system tray integration
-- ✨ AppImage and DEB package support for Linux
-- 🐛 Various bug fixes and improvements
 
 ## Support
 
