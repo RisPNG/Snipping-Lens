@@ -11,16 +11,13 @@ Snipping Lens is a cross-platform application that automatically detects when yo
 - ⏸️ **Pause/Resume**: Temporarily disable automatic detection
 - 📝 **Log Viewing**: View application logs for troubleshooting
 - 🚀 **Auto-start**: Starts automatically with your system
-- 🌐 **Cross-platform**: Works on Windows and Linux Mint Debian Edition
+- 🌐 **Cross-platform**: Works on Windows and Linux Mint Debian Edition (Tested, other Linux distros may or may not work)
 
 ## Supported Platforms
 
 ### Windows
 - Windows 10/11
-- Detects screenshots from:
-  - Win+Shift+S (built-in snipping tool)
-  - Snipping Tool application
-  - Screen Sketch
+- Detects screenshots from Win+Shift+S (built-in snipping tool)
 
 ### Linux Mint Debian Edition
 - Requires xclip and gnome-screenshot
@@ -57,7 +54,7 @@ Snipping Lens is a cross-platform application that automatically detects when yo
 ### Taking Screenshots
 
 **Windows:**
-- Use Win+Shift+S, Snipping Tool, or left-click the tray icon
+- Use Win+Shift+S, or left-click the tray icon
 - Screenshots are automatically detected and opened in Google Lens
 
 **Linux:**
@@ -78,6 +75,9 @@ Use the Pause feature when you need to take screenshots without automatically op
 
 ## System Requirements
 
+### Python Version
+- Python 3.11 is required.
+
 ### Windows
 - Windows 10 or later
 - Internet connection for Google Lens
@@ -94,7 +94,13 @@ Use the Pause feature when you need to take screenshots without automatically op
 
 Screenshots are uploaded to [Litterbox](https://litterbox.catbox.moe/), a free and anonymous image hosting service, solely for the purpose of generating a URL that can be used with Google Lens. Images uploaded to Litterbox are not stored permanently—they automatically expire and are deleted after 1 hour. No user information is attached to the upload, and the application does not keep any record of your screenshots.
 
+## Limitations & Longevity
+
+As long as Litterbox returns the expected response (a direct image URL) and as long as the Google Lens endpoint `https://lens.google.com/uploadbyurl?url=<uploaded_image_url>` still exists and works, this program will continue to function as intended. If either service changes or is discontinued, the program's automatic search feature may no longer work.
+
 ## Troubleshooting
+
+> **Note:** If you use the provided installation scripts (`build-windows.bat` or `build-linux.sh`), all required dependencies will be installed automatically. The following troubleshooting steps are only relevant if you install manually or on an unsupported system.
 
 ### Linux: "xclip not found" error
 Install xclip:

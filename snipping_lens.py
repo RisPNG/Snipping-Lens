@@ -182,7 +182,7 @@ Comment=Automatic Google Lens search for screenshots
             if IS_WINDOWS:
                 # Launch Windows Snipping Tool
                 logging.info("About to launch Windows Snipping Tool (ms-screenclip:)")
-                subprocess.Popen(["ms-screenclip:"])
+                os.startfile("ms-screenclip:")
                 logging.info("Launched Windows Snipping Tool")
             else:
                 # Launch gnome-screenshot on Linux
@@ -256,6 +256,8 @@ Comment=Automatic Google Lens search for screenshots
 
             if found_image:
                 logging.info("Snip detected from left-click, processing regardless of pause state.")
+                # Set last_clipboard_hash to prevent double-processing by clipboard monitor
+                self.last_clipboard_hash = self.get_image_hash(found_image)
                 process_thread = threading.Thread(target=self.process_screenshot, args=(found_image,), daemon=True)
                 process_thread.start()
             else:
@@ -384,11 +386,13 @@ Comment=Automatic Google Lens search for screenshots
             response.raise_for_status()
             litterbox_link = response.text.strip()
             
-            if response.status_code == 200 and litterbox_link.startswith('https://litterbox.catbox.moe/'):
-                logging.info(f"Image uploaded: {litterbox_link}")
-                return f"https://lens.google.com/uploadbyurl?url={litterbox_link}"
-            elif response.status_code == 200 and litterbox_link.startswith('https://files.catbox.moe/'):
-                # Litterbox may return a catbox.moe file link
+            if (
+                response.status_code == 200 and (
+                    litterbox_link.startswith('https://litterbox.catbox.moe/') or
+                    litterbox_link.startswith('https://litter.catbox.moe/') or
+                    litterbox_link.startswith('https://files.catbox.moe/')
+                )
+            ):
                 logging.info(f"Image uploaded: {litterbox_link}")
                 return f"https://lens.google.com/uploadbyurl?url={litterbox_link}"
             else:
