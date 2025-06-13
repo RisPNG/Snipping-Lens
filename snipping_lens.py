@@ -1,5 +1,12 @@
 import os
 import time
+
+# Check for GUI environment (DISPLAY variable)
+if os.name == "posix" and not os.environ.get("DISPLAY"):
+    print("Warning: No DISPLAY environment variable found. The tray icon will not appear unless run in a graphical session.")
+    import logging
+    logging.warning("No DISPLAY environment variable found. The tray icon will not appear unless run in a graphical session.")
+
 import threading
 import tempfile
 import webbrowser
@@ -9,8 +16,8 @@ import platform
 import subprocess
 from datetime import datetime
 import requests
-import pystray
 from PIL import Image, ImageDraw
+from tray_qt import run_tray_qt
 
 # Platform-specific imports
 if platform.system() == "Windows":
@@ -171,16 +178,91 @@ Comment=Automatic Google Lens search for screenshots
     def take_screenshot(self):
         """Take a screenshot using platform-specific tools"""
         try:
+            logging.info(f"take_screenshot called. Platform: {'Windows' if IS_WINDOWS else 'Linux'}")
             if IS_WINDOWS:
                 # Launch Windows Snipping Tool
+                logging.info("About to launch Windows Snipping Tool (ms-screenclip:)")
                 subprocess.Popen(["ms-screenclip:"])
                 logging.info("Launched Windows Snipping Tool")
             else:
                 # Launch gnome-screenshot on Linux
+                logging.info("About to launch gnome-screenshot with: gnome-screenshot -c -a")
                 subprocess.Popen(["gnome-screenshot", "-c", "-a"])
                 logging.info("Launched gnome-screenshot")
         except Exception as e:
             logging.error(f"Failed to launch screenshot tool: {e}")
+
+    def force_snip_and_search(self, icon=None, item=None):
+        """
+        Force a snip and search, regardless of pause state.
+        This is used for left-click tray icon action.
+        """
+        try:
+            import time
+
+            timeout = 10
+            poll_interval = 0.3
+            start_time = time.time()
+            found_image = None
+
+            if IS_WINDOWS:
+                from PIL import ImageGrab
+                # Get initial clipboard hash
+                initial_clipboard = None
+                try:
+                    initial_clipboard = ImageGrab.grabclipboard()
+                except Exception:
+                    initial_clipboard = None
+                initial_hash = self.get_image_hash(initial_clipboard)
+
+                self.take_screenshot()
+
+                while time.time() - start_time < timeout:
+                    clipboard_content = None
+                    try:
+                        clipboard_content = ImageGrab.grabclipboard()
+                    except Exception:
+                        clipboard_content = None
+
+                    current_hash = self.get_image_hash(clipboard_content)
+                    if current_hash and current_hash != initial_hash:
+                        if isinstance(clipboard_content, list):
+                            for filename in clipboard_content:
+                                if isinstance(filename, str) and os.path.isfile(filename) and \
+                                    filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.gif')):
+                                    found_image = filename
+                                    break
+                        elif isinstance(clipboard_content, Image.Image):
+                            found_image = clipboard_content
+
+                    if found_image:
+                        break
+                    time.sleep(poll_interval)
+            else:
+                # Linux: use get_clipboard_image_linux
+                # Get initial clipboard hash
+                initial_clipboard = self.get_clipboard_image_linux()
+                initial_hash = self.get_image_hash(initial_clipboard)
+
+                self.take_screenshot()
+
+                while time.time() - start_time < timeout:
+                    clipboard_content = self.get_clipboard_image_linux()
+                    current_hash = self.get_image_hash(clipboard_content)
+                    if clipboard_content is not None and current_hash != initial_hash:
+                        found_image = clipboard_content
+                        break
+                    time.sleep(poll_interval)
+
+            if found_image:
+                logging.info("Snip detected from left-click, processing regardless of pause state.")
+                process_thread = threading.Thread(target=self.process_screenshot, args=(found_image,), daemon=True)
+                process_thread.start()
+            else:
+                logging.error("No snip detected in clipboard after left-click action.")
+
+        except Exception as e:
+            logging.error(f"Error in force_snip_and_search: {e}", exc_info=True)
 
     def toggle_pause(self):
         """Toggle pause/resume state"""
@@ -235,33 +317,30 @@ Comment=Automatic Google Lens search for screenshots
             self.icon.menu = menu
 
     def run_tray_icon(self):
-        """Run the system tray icon"""
-        icon_image = None
-        if TRAY_ICON_PATH and os.path.exists(TRAY_ICON_PATH):
-            try:
-                icon_image = Image.open(TRAY_ICON_PATH)
-                logging.info(f"Using custom tray icon: {TRAY_ICON_PATH}")
-            except Exception as e:
-                logging.error(f"Failed to load custom tray icon '{TRAY_ICON_PATH}': {e}. Using default.")
-        
-        if icon_image is None:
-            logging.info("Using default generated tray icon.")
-            icon_image = self.create_default_image()
+        """Run the system tray icon using PyQt5"""
+        icon_path = TRAY_ICON_PATH if os.path.exists(TRAY_ICON_PATH) else None
 
-        # Create initial menu
-        menu = pystray.Menu(
-            pystray.MenuItem("Pause", self.toggle_pause),
-            pystray.MenuItem("Show Logs", self.show_logs),
-            pystray.MenuItem("Exit", self.exit_app)
+        def on_left_click():
+            self.force_snip_and_search()
+
+        def on_pause_resume():
+            self.toggle_pause()
+
+        def on_show_logs():
+            self.show_logs()
+
+        def on_exit():
+            self.exit_app()
+
+        logging.info("Running system tray icon (PyQt5/QSystemTrayIcon).")
+        run_tray_qt(
+            icon_path=icon_path,
+            on_left_click=on_left_click,
+            on_pause_resume=on_pause_resume,
+            on_show_logs=on_show_logs,
+            on_exit=on_exit,
+            is_paused=self.is_paused
         )
-        
-        self.icon = pystray.Icon("SnippingLens", icon_image, "Snipping Lens", menu)
-        
-        # Set up left-click action
-        self.icon.default_action = self.take_screenshot
-        
-        logging.info("Running system tray icon.")
-        self.icon.run()
 
     def exit_app(self, icon=None, item=None):
         """Exit the application"""
@@ -570,9 +649,9 @@ if __name__ == "__main__":
     try:
         # Basic dependency check
         import requests
-        import pystray
         from PIL import Image
         import psutil
+        from tray_qt import run_tray_qt
         
         if IS_LINUX:
             # Check for xclip on Linux
