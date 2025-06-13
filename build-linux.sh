@@ -41,8 +41,8 @@ sudo apt install -y xclip gnome-screenshot python3-tk python3-dev build-essentia
 
 # Install Python dependencies
 echo "Installing Python dependencies..."
-PYTHON_BIN="$(which python3)"
-PIP_BIN="$(which pip3)"
+PYTHON_BIN="/usr/bin/python3"
+PIP_BIN="/usr/bin/pip3"
 
 echo "Using Python interpreter: $PYTHON_BIN"
 echo "Using pip: $PIP_BIN"
