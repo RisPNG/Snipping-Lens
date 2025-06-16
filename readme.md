@@ -15,6 +15,10 @@ Snipping Lens is a cross-platform application that automatically detects when yo
 3. [Support and Contributing](#support-and-contributing)
 4. [Disclaimer](#disclaimer)
 
+## Demo
+
+https://github.com/RisPNG/Snipping-Lens/blob/main/demo.mp4
+
 ## Installation
 
 Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the latest release and installation instructions.
