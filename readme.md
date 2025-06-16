@@ -4,7 +4,16 @@
 <a href="https://github.com/RisPNG/Snipping-Lens"><img alt="GitHub Last Commit" src="https://img.shields.io/github/last-commit/RisPNG/Snipping-Lens?style=flat&color=lightyellow"></a>
 </p>
 
-Snipping Lens is a cross-platform application that automatically detects when you take screenshots and searches them using Google Lens for quick information lookup and text extraction.
+- Found a coding video but cannot copy the code?
+- You're a dyslexic or know a dyslexic fella that has trouble spelling and copying things properly?
+- Need texts from meetings share screen?
+- Found a meme and wanna know reverse search its origin?
+- Want to quickly translate foreign text from screenshots?
+- Working with scanned documents or textbooks?
+
+Snipping Lens gotchu!
+
+Snipping Lens is a cross-platform application that automatically detects when you take screenshots and searches them using Google Lens for quick image lookup, and text extraction and translation.
 
 ## Sections
 1. [Installation](#installation)
