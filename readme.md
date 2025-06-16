@@ -71,7 +71,7 @@ Python 3.11 is recommended. If you use the provided installation scripts (`build
 
 ## Support and Contributing
 
-If you like this project, please leave a star 🌟, and share it with your friends! Consider donating on [Ko-Fi](https://paypal.me/rispng).
+If you like this project, please leave a star 🌟, and share it with your friends! Consider donating on [PayPal](https://paypal.me/rispng) to support development.
 
 If you encounter any issue:
 
