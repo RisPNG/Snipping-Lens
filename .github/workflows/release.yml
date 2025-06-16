@@ -274,37 +274,30 @@ jobs:
             ${{ steps.extract_release_info.outputs.description }}
             
             ## Downloads
-            
+
             ### Windows
             - **SnippingLens.exe** - Standalone executable for Windows
-            
-            ### Linux
+
+            ### Linux (Only tested on Linux Mint Debian Edition)
             - **SnippingLens-x86_64.AppImage** - Universal Linux application (no installation required)
             - **snipping-lens.deb** - Debian/Ubuntu package
-            
+
             ## Installation Instructions
-            
+
             ### Windows
-            1. Download `SnippingLens.exe`
-            2. Run the executable
-            3. The app will start in the system tray
-            
+            1. Download `SnippingLens.exe`.
+            2. Run the executable.
+            3. The app will start in the system tray and automatically added to startup.
+
             ### Linux (AppImage)
-            1. Download `SnippingLens-x86_64.AppImage`
-            2. Make it executable: `chmod +x SnippingLens-x86_64.AppImage`
-            3. Run: `./SnippingLens-x86_64.AppImage`
-            
+            1. Download `SnippingLens-x86_64.AppImage`.
+            2. Make it executable: `chmod +x SnippingLens-x86_64.AppImage`.
+            3. Run with `./SnippingLens-x86_64.AppImage` or use [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher/releases) (Recommended).
+
             ### Linux (DEB package)
-            1. Download `snipping-lens.deb`
-            2. Install: `sudo dpkg -i snipping-lens.deb`
-            3. Fix dependencies if needed: `sudo apt-get install -f`
-            4. Run from applications menu or terminal: `snipping-lens`
-            
-            ## Usage
-            - **Left-click** the tray icon to take a screenshot
-            - **Right-click** the tray icon for options (Pause/Resume, Show Logs, Exit)
-            - Screenshots are automatically detected and searched on Google Lens
-            - The app starts automatically with your system
+            1. Download `snipping-lens.deb`.
+            2. Install with `sudo dpkg -i snipping-lens.deb` or run the deb file if your linux distro supports it.
+            3. Run from applications menu or terminal: `snipping-lens`.
           draft: false
           prerelease: ${{ steps.extract_release_info.outputs.prerelease }}
 
