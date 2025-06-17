@@ -1,4 +1,5 @@
 ![RisPNG/Snipping-Lens](https://github.com/RisPNG/Snipping-Lens/blob/main/banner.png)
+
 <p align="center">
 <a href="https://github.com/RisPNG/Snipping-Lens/stargazers"><img alt="GitHub Repo Stars" src="https://img.shields.io/github/stars/RisPNG/Snipping-Lens?style=flat&color=limegreen"></a>
 <a href="https://github.com/RisPNG/Snipping-Lens"><img alt="GitHub Last Commit" src="https://img.shields.io/github/last-commit/RisPNG/Snipping-Lens?style=flat&color=lightyellow"></a>
@@ -16,13 +17,14 @@ Snipping Lens gotchu!
 Snipping Lens is a cross-platform application that automatically detects when you take screenshots and searches them using Google Lens for quick image lookup, and text extraction and translation.
 
 ## Sections
+
 1. [Installation](#installation)
-1. [Usage](#usage)
-2. [Requirements](#requirements)
-2. [FAQ](#faq)
-2. [Building from Source](#building-from-source)
-3. [Support and Contributing](#support-and-contributing)
-4. [Disclaimer](#disclaimer)
+2. [Usage](#usage)
+3. [Requirements](#requirements)
+4. [FAQ](#faq)
+5. [Building from Source](#building-from-source)
+6. [Support and Contributing](#support-and-contributing)
+7. [Disclaimer](#disclaimer)
 
 ## Demo
 
@@ -50,13 +52,13 @@ Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the lates
 
 - **Left-click**: Takes a screenshot according to the system's snipping tool or equivalent.
 - **Right-click**: Show context menu with options:
-  - **Pause/Resume**: Temporarily disable/enable automatic screenshot detection. Left-clicking the tray icon will snap and search regardless of the pause state. 
+  - **Pause/Resume**: Temporarily disable/enable automatic screenshot detection. Left-clicking the tray icon will snap and search regardless of the pause state.
   - **Show Logs**: View application logs in a text editor.
   - **Exit**: Close the application.
 
 ## Requirements
 
-- Internet connection for Google Lens
+- Internet connection for Google Lens.
 
 ### Windows
 
@@ -88,7 +90,7 @@ If you like this project, please leave a star 🌟, and share it with your frien
 
 If you encounter any issue:
 
-1. Check the [Issues](https://github.com/RisPNG/Snipping-Lens/issues) page if issue has been raised. 
+1. Check the [Issues](https://github.com/RisPNG/Snipping-Lens/issues) page if issue has been raised.
 2. Create a new issue if necessary and provide in-depth details of the issue including the relevant logs (right-click tray icon > Show Logs).
 
 ## Disclaimer
