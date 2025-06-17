@@ -38,35 +38,35 @@ Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the lates
 
 **Windows:**
 
-- Use Win+Shift+S, or left-click the tray icon
-- Screenshots are automatically detected and opened in Google Lens
+- Use Win+Shift+S, or left-click the tray icon.
+- Screenshots are automatically detected and opened in Google Lens.
 
 **Linux:**
 
-- Use `gnome-screenshot -c -a` or left-click the tray icon
-- Screenshots are automatically detected and opened in Google Lens
+- Use `gnome-screenshot -c -a` or left-click the tray icon.
+- Screenshots are automatically detected and opened in Google Lens.
 
 ### Tray Icon Actions
 
 - **Left-click**: Takes a screenshot according to the system's snipping tool or equivalent.
 - **Right-click**: Show context menu with options:
   - **Pause/Resume**: Temporarily disable/enable automatic screenshot detection. Left-clicking the tray icon will snap and search regardless of the pause state. 
-  - **Show Logs**: View application logs in a text editor..
-  - **Exit**: Close the application
+  - **Show Logs**: View application logs in a text editor.
+  - **Exit**: Close the application.
 
 ## Requirements
 
+- Internet connection for Google Lens
+
 ### Windows
 
-- Windows 10 or later
-- Internet connection for Google Lens
+- Windows 10 or later.
 
 ### Linux
 
-- XApp Status Applet (Tested and default on Linux Mint Debian Edition, other Linux distros may or may not work)
-- xclip package
-- gnome-screenshot package
-- Internet connection for Google Lens
+- XApp Status Applet (Tested and default on Linux Mint Debian Edition, other Linux distros may or may not work).
+- xclip package.
+- gnome-screenshot package.
 
 ## FAQ
 

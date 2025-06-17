@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Snipping Lens - Linux Installation Script
+# Snipping Lens - Linux Installation Script (with venv support)
 # This script will install Snipping Lens and its dependencies on Linux Mint Debian Edition
 
 set -e
 
-echo "=== Snipping Lens Installation Script ==="
+echo "=== Snipping Lens Installation Script (with venv) ==="
 echo
 
 # Check if running as root
@@ -34,25 +34,33 @@ if ! command_exists pip3; then
     sudo apt install -y python3-pip
 fi
 
+if ! command_exists python3-venv; then
+    echo "Installing python3-venv..."
+    sudo apt update
+    sudo apt install -y python3-venv
+fi
+
 # Install system dependencies
 echo "Installing system dependencies..."
 sudo apt update
 sudo apt install -y xclip gnome-screenshot python3-tk python3-dev build-essential libayatana-appindicator3-1
 
-# Install Python dependencies
-echo "Installing Python dependencies..."
-PYTHON_BIN="/usr/bin/python3"
-PIP_BIN="/usr/bin/pip3"
-
-echo "Using Python interpreter: $PYTHON_BIN"
-echo "Using pip: $PIP_BIN"
-
-"$PIP_BIN" install --user Pillow==11.1.0 psutil==7.0.0 pystray==0.19.5 requests==2.32.3 PyQt5==5.15.10
-
 # Create application directory
 APP_DIR="$HOME/.local/share/snipping-lens"
 echo "Creating application directory: $APP_DIR"
 mkdir -p "$APP_DIR"
+
+# Set venv directory (relative to install script location, so always local)
+VENV_DIR="$PWD/.venv"
+echo "Creating virtual environment in: $VENV_DIR"
+python3 -m venv "$VENV_DIR"
+
+# Activate venv and install Python dependencies
+echo "Installing Python dependencies in venv..."
+source "$VENV_DIR/bin/activate"
+pip install --upgrade pip
+pip install Pillow==11.1.0 psutil==7.0.0 pystray==0.19.5 requests==2.32.3 PyQt5==5.15.10
+deactivate
 
 # Copy the main script (assuming it's in the same directory as this install script)
 if [ -f "snipping_lens.py" ]; then
@@ -82,6 +90,9 @@ else
     echo "Warning: my_icon.png not found. The app will use a default icon."
 fi
 
+# Copy the venv to the app dir (so the app runs even if user deletes source dir)
+cp -r "$VENV_DIR" "$APP_DIR/venv"
+
 # Create executable wrapper script
 BIN_DIR="$HOME/.local/bin"
 mkdir -p "$BIN_DIR"
@@ -89,7 +100,8 @@ mkdir -p "$BIN_DIR"
 cat > "$BIN_DIR/snipping-lens" << EOF
 #!/bin/bash
 cd "$APP_DIR"
-"$PYTHON_BIN" snipping_lens.py "\$@"
+source "\$APP_DIR/venv/bin/activate"
+python snipping_lens.py "\$@"
 EOF
 
 chmod +x "$BIN_DIR/snipping-lens"
@@ -163,7 +175,7 @@ echo
 # Ask if user wants to start now
 read -p "Would you like to start Snipping Lens now? (y/N): " -n 1 -r
 echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
+if [[ \$REPLY =~ ^[Yy]$ ]]; then
     echo "Starting Snipping Lens..."
     "$BIN_DIR/snipping-lens"
     echo "Snipping Lens started! Look for it in your system tray."
