@@ -30,6 +30,8 @@ Snipping Lens is a cross-platform application that automatically detects when yo
 
 https://github.com/user-attachments/assets/56979ab6-48e1-4112-af36-c053e9e17089
 
+v3 demo soon.
+
 ## Installation
 
 Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the latest release and installation instructions.
@@ -43,17 +45,11 @@ Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the lates
 - Use Win+Shift+S, or left-click the tray icon.
 - Screenshots are automatically detected and opened in Google Lens.
 
-**Linux:**
-
-- Use `gnome-screenshot -c -a` or left-click the tray icon.
-- Screenshots are automatically detected and opened in Google Lens.
-
 ### Tray Icon Actions
 
 - **Left-click**: Takes a screenshot according to the system's snipping tool or equivalent.
 - **Right-click**: Show context menu with options:
-  - **Pause/Resume**: Temporarily disable/enable automatic screenshot detection. Left-clicking the tray icon will snap and search regardless of the pause state.
-  - **Show Logs**: View application logs in a text editor.
+  - **Open App**: Opens Snipping Lens main window.
   - **Exit**: Close the application.
 
 ## Requirements
@@ -63,12 +59,6 @@ Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the lates
 ### Windows
 
 - Windows 10 or later.
-
-### Linux
-
-- XApp Status Applet (Tested and default on Linux Mint Debian Edition, other Linux distros may or may not work).
-- xclip package.
-- gnome-screenshot package.
 
 ## FAQ
 
@@ -82,7 +72,7 @@ As long as Litterbox returns the expected response (a direct image URL) and as l
 
 ## Building from Source
 
-Python 3.11 is recommended. If you use the provided installation scripts (`build-windows.bat` or `build-linux.sh`), all required dependencies will be installed automatically.
+Python 3.10 is recommended. If you use the provided installation scripts (`build-windows.bat` or `build-linux.sh`), all required dependencies will be installed automatically.
 
 ## Support and Contributing
 

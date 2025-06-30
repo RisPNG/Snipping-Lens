@@ -93,7 +93,7 @@ def open_flet_window():
             if psutil.pid_exists(pid):
                 proc = psutil.Process(pid)
                 if "python" in proc.name().lower():
-                    logging.info("Config window already running.")
+                    logging.info("Application window already running.")
                     return
         except Exception:
             pass
@@ -101,7 +101,7 @@ def open_flet_window():
             os.remove(LOCKFILE)
         except Exception:
             pass
-    logging.info("Launching Flet config window.")
+    logging.info("Launching Snipping Lens main window.")
     subprocess.Popen([sys.executable, os.path.join(EXE_DIR, "config_window.py")])
 
 
@@ -140,7 +140,7 @@ class TrayApp(QObject):
             }
         """
         )
-        self.config_action = QAction("Config")
+        self.config_action = QAction("Open App")
         self.config_action.triggered.connect(self.open_config)
         self.menu.addAction(self.config_action)
         self.quit_action = QAction("Exit")
@@ -168,7 +168,7 @@ class TrayApp(QObject):
 
     def open_config(self):
         open_flet_window()
-        logging.info("Config menu clicked.")
+        logging.info("Launched Snipping Lens main window.")
 
     def exit_app(self):
         try:
