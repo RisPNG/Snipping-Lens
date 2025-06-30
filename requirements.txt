@@ -1,5 +1,10 @@
-PyQt5==5.15.10
-Pillow==11.1.0
+copykitten==1.2.2
+flet==0.28.3
+keyboard==0.13.5
+Pillow==11.2.1
 psutil==7.0.0
-pystray==0.19.5
-Requests==2.32.3
+PySide6==6.9.1
+PySide6_Addons==6.9.1
+PySide6_Essentials==6.9.1
+Requests==2.32.4
+watchdog==6.0.0
