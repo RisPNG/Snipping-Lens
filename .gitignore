@@ -176,3 +176,5 @@ cython_debug/
 # ###
 *.log
 *.json
+*WPy64-310111/
+*.venv/
