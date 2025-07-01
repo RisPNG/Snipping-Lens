@@ -1,0 +1,6 @@
+shellConfigs2 = list:
+ dict:
+   name = 'Python'
+   exe = '.\\python.exe'
+   ipython = 'no'
+   gui = 'none'

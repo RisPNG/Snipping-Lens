@@ -1,0 +1,25 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@holoviz/panel@0.13.0-rc.10/dist/panel.min.js"></script>
+    <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+  </head>
+  <body> 
+   <py-env>
+      - baresql
+    </py-env>
+    <h1>baresql Example</h1>
+    <div id="myplot"></div>
+    <py-script>
+from __future__ import print_function, unicode_literals, division  # if Python2.7
+from baresql import baresql
+bsql = baresql.baresql(keep_log = True )
+bsqldf = lambda q: bsql.df(q, dict(globals(),**locals()))
+
+users = ['Alexander', 'Bernard', 'Charly', 'Danielle', 'Esmeralda', 'Franz']
+#  We use the python 'users' list like a SQL table
+sql = "select 'Welcome ! ' , c0 from users$$"
+bsqldf(sql)
+    </py-script>
+</body>
+</html>

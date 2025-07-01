@@ -1,0 +1,19 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+  </head>
+  <body> 
+  <py-env>
+      - sqlite-utils
+    </py-env>
+    <h1>Sqlite-utils Example</h1>
+    <div id="myplot"></div>
+    <py-script>
+import sqlite_utils
+db = sqlite_utils.Database(memory=True)
+print(list(db.query("select 3 * 5")))
+print('sqlite-version', list(db.query("select sqlite_version()")))
+    </py-script>
+</body>
+</html>
