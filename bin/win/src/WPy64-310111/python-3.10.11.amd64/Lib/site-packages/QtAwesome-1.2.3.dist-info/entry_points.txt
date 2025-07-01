@@ -1,2 +1,0 @@
-[console_scripts]
-qta-browser = qtawesome.icon_browser:run

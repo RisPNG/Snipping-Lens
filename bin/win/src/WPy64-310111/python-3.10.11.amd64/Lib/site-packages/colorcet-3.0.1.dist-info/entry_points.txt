@@ -1,2 +1,0 @@
-[console_scripts]
-colorcet = colorcet.__main__:main

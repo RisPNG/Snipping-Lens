@@ -1,3 +1,0 @@
-_scs_direct
-_scs_indirect
-scs

@@ -1,1 +1,0 @@
-MyLazyType = object()

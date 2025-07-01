@@ -1,2 +1,0 @@
-[console_scripts]
-jupyter-fileid = jupyter_server_fileid.cli:main

@@ -1,4 +1,0 @@
-[console_scripts]
-qdarkstyle = qdarkstyle.__main__:main
-qdarkstyle.example = qdarkstyle.example.__main__:main
-qdarkstyle.utils = qdarkstyle.utils.__main__:main

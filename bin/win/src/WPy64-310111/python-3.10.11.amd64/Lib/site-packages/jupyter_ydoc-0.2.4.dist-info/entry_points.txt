@@ -1,3 +1,0 @@
-[jupyter_ydoc]
-file = jupyter_ydoc.ydoc:YFile
-notebook = jupyter_ydoc.ydoc:YNotebook
