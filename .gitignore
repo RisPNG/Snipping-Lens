@@ -176,4 +176,3 @@ cython_debug/
 # ###
 *.log
 *.json
-.venv/
