@@ -1,0 +1,3 @@
+[console_scripts]
+hupper = hupper.cli:main
+

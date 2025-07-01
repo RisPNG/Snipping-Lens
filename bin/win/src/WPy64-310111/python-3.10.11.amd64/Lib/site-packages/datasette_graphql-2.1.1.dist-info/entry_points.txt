@@ -1,0 +1,2 @@
+[datasette]
+graphql = datasette_graphql

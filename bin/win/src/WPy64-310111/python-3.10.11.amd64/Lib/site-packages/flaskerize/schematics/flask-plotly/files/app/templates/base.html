@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Flaskerized App</title>
+    <meta charset="utf-8" />
+    <link
+      rel="shortcut icon"
+      href="{{ url_for('static', filename='favicon.ico') }}"
+    />
+    
+    <div class="container-fluid">
+      {% block content %}{% endblock %}
+    </div>
+  </body>
+</html>

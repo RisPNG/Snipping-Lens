@@ -1,0 +1,5 @@
+[console_scripts]
+configure_accelerate = fastai.distributed:configure_accelerate
+
+[nbdev]
+fastai = fastai._modidx:d

@@ -1,0 +1,13 @@
+Metadata-Version: 2.1
+Name: scs
+Version: 3.2.3
+Summary: scs: splitting conic solver
+Home-page: http://github.com/cvxgrp/scs
+Author: Brendan O'Donoghue
+Author-email: bodonoghue85@gmail.com
+License: MIT
+License-File: LICENSE
+Requires-Dist: numpy (>=1.7)
+Requires-Dist: scipy (>=0.13.2)
+
+Solves convex quadratic cone programs via operator splitting. Can solve: linear programs (LPs), second-order cone programs (SOCPs), semidefinite programs (SDPs), exponential cone programs (ECPs), and power cone programs (PCPs), or problems with any combination of those cones. See https://www.cvxgrp.org/scs/ for more details.

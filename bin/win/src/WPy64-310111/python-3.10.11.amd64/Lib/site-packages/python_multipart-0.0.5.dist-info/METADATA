@@ -1,0 +1,24 @@
+Metadata-Version: 2.1
+Name: python-multipart
+Version: 0.0.5
+Summary: A streaming multipart parser for Python
+Home-page: http://github.com/andrew-d/python-multipart
+Author: Andrew Dunham
+License: Apache
+Platform: any
+Classifier: Development Status :: 3 - Alpha
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+License-File: LICENSE.txt
+Requires-Dist: six (>=1.4.0)
+
+UNKNOWN
+

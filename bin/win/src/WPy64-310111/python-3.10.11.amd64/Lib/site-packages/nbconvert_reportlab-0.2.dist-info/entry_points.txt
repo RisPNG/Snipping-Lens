@@ -1,0 +1,3 @@
+[nbconvert.exporters]
+pdf-rl=nbconvert_reportlab:ReportlabExporter
+

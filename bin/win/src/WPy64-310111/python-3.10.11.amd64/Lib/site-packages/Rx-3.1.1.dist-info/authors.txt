@@ -1,0 +1,6 @@
+RxPY v3 team
+
+Dag Brattli @dbrattli
+Erik Kemperman, @erikkemperman
+Jérémie Fache, @jcafhe
+Romain Picard, @MainRo

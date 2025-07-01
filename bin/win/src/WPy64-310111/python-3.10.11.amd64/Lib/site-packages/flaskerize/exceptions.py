@@ -1,0 +1,2 @@
+class InvalidSchema(Exception):
+    pass

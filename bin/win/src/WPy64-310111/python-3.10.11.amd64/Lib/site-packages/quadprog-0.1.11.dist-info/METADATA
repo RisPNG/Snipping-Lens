@@ -1,0 +1,33 @@
+Metadata-Version: 2.1
+Name: quadprog
+Version: 0.1.11
+Summary: Quadratic Programming Solver
+Home-page: https://github.com/quadprog/quadprog
+Author: Robert T. McGibbon
+Author-email: rmcgibbo@gmail.com
+License: GPLv2+
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Financial and Insurance Industry
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Topic :: Scientific/Engineering :: Mathematics
+License-File: LICENSE
+Requires-Dist: numpy
+
+Minimize     1/2 x^T G x - a^T x
+
+Subject to   C.T x >= b
+
+This routine uses the the Goldfarb/Idnani dual algorithm [1].
+
+References
+----------
+1) D. Goldfarb and A. Idnani (1983). A numerically stable dual
+   method for solving strictly convex quadratic programs.
+   Mathematical Programming, 27, 1-33.

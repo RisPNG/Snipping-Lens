@@ -1,0 +1,3 @@
+[pylsp]
+pyls_spyder = pyls_spyder.plugin
+

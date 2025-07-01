@@ -1,0 +1,79 @@
+Metadata-Version: 2.1
+Name: trio-asyncio
+Version: 0.12.0
+Summary: A re-implementation of the asyncio mainloop on top of Trio
+Home-page: https://github.com/python-trio/trio-asyncio
+Author: Matthias Urlichs
+Author-email: matthias@urlichs.de
+License: MIT -or- Apache License 2.0
+Keywords: async,io,trio,asyncio,trio-asyncio
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: POSIX :: BSD
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Topic :: System :: Networking
+Classifier: Framework :: Trio
+Classifier: Framework :: AsyncIO
+Requires-Python: >=3.6
+Requires-Dist: trio (>=0.15.0)
+Requires-Dist: attrs
+Requires-Dist: outcome
+
+``trio-asyncio`` is a re-implementation of the ``asyncio`` mainloop on top of
+Trio.
+
+Rationale
+=========
+
+There are quite a few asyncio-compatible libraries.
+
+On the other hand, Trio has native concepts of tasks and task cancellation.
+Asyncio, on the other hand, is based on chaining Future objects, albeit
+with nicer syntax.
+
+Thus, being able to use asyncio libraries from Trio is useful.
+
+Principle of operation
+======================
+
+The core of the "normal" asyncio main loop is the repeated execution of
+synchronous code that's submitted to ``call_soon`` or
+``add_reader``/``add_writer``.
+
+Everything else within ``asyncio``, i.e. Futures and ``async``/``await``,
+is just syntactic sugar. There is no concept of a task; while a Future can
+be cancelled, that in itself doesn't affect the code responsible for
+fulfilling it.
+
+On the other hand, trio has genuine tasks with no separation between
+returning a value asynchronously, and the code responsible for providing
+that value.
+
+``trio_asyncio`` implements a task which runs (its own version of) the
+asyncio main loop. It also contains shim code which translates between these
+concepts as transparently and correctly as possible, and it supplants a few
+of the standard loop's key functions.
+
+This works rather well: ``trio_asyncio`` consists of just ~700 lines of
+code (asyncio: ~8000) but passes the complete Python 3.6 test suite with no
+errors.
+
+``trio_asyncio`` requires Python 3.6 or better.
+
+Author
+======
+
+Matthias Urlichs <matthias@urlichs.de>
+
+
+

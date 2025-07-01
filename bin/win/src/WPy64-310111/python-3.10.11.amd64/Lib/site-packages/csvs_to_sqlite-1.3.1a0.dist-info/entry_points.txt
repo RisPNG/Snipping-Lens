@@ -1,0 +1,4 @@
+
+        [console_scripts]
+        csvs-to-sqlite=csvs_to_sqlite.cli:cli
+    

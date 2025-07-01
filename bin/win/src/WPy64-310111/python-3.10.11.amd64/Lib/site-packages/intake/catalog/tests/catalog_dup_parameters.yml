@@ -1,0 +1,22 @@
+sources:
+  entry1_part:
+    description: entry1 part
+    parameters:
+      part:
+        description: a
+        type: str
+      part:
+        description: b
+        type: int
+    driver: csv
+    args: # passed to the open() method
+      urlpath: '{{ CATALOG_DIR }}/entry1_{{ part }}.csv'
+  entry2_part:
+    description: entry2 part
+    parameters:
+      part:
+        description: a
+        type: str
+    driver: csv
+    args: # passed to the open() method
+      urlpath: '{{ CATALOG_DIR }}/entry2_{{ part }}.csv'

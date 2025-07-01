@@ -1,0 +1,32 @@
+Metadata-Version: 2.0
+Name: jupyterlab-launcher
+Version: 0.13.1
+Summary: Jupyter Launcher
+Home-page: http://jupyter.org
+Author: Jupyter Development Team
+Author-email: jupyter@googlegroups.com
+License: BSD
+Description-Content-Type: UNKNOWN
+Keywords: Jupyter,JupyterLab
+Platform: Linux
+Platform: Mac OS X
+Platform: Windows
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Requires-Python: >=3.5
+Requires-Dist: jsonschema (>=2.6.0)
+Requires-Dist: notebook (>=4.2.0)
+Provides-Extra: test
+Requires-Dist: pytest; extra == 'test'
+Requires-Dist: requests; extra == 'test'
+
+
+This package is used to launch an application built using JupyterLab
+
+

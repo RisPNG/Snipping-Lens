@@ -1,0 +1,100 @@
+Metadata-Version: 2.1
+Name: mizani
+Version: 0.9.0
+Summary: Scales for Python
+Author-email: Hassan Kibirige <has2k1@gmail.com>
+License: Copyright (c) 2016, Hassan Kibirige
+        All rights reserved.
+        
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+        
+         * Redistributions of source code must retain the above copyright notice,
+           this list of conditions and the following disclaimer.
+         * Redistributions in binary form must reproduce the above copyright
+           notice, this list of conditions and the following disclaimer in the
+           documentation and/or other materials provided with the distribution.
+         * Neither the name of  nor the names of its contributors may be used to
+           endorse or promote products derived from this software without specific
+           prior written permission.
+        
+        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+        AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+        ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+        LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+        CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+        SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+        INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+        CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+        ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+        POSSIBILITY OF SUCH DAMAGE.
+        
+Project-URL: homepage, https://mizani.readthedocs.io/en/stable
+Project-URL: repository, https://github.com/has2k1/mizani
+Project-URL: changelog, https://mizani.readthedocs.io/en/stable/changelog.html
+Project-URL: ci, https://github.com/has2k1/mizani/actions
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Scientific/Engineering :: Visualization
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy (>=1.19.0)
+Requires-Dist: scipy (>=1.5.0)
+Requires-Dist: pandas (>=1.3.5)
+Requires-Dist: matplotlib (>=3.5.0)
+Requires-Dist: tzdata ; platform_system == "Windows" or platform_system == "Emscripten"
+Requires-Dist: backports.zoneinfo ; python_version < "3.9"
+Provides-Extra: all
+Requires-Dist: mizani[doc] ; extra == 'all'
+Requires-Dist: mizani[build] ; extra == 'all'
+Requires-Dist: mizani[lint] ; extra == 'all'
+Requires-Dist: mizani[test] ; extra == 'all'
+Requires-Dist: mizani[dev] ; extra == 'all'
+Provides-Extra: build
+Requires-Dist: build ; extra == 'build'
+Requires-Dist: wheel ; extra == 'build'
+Provides-Extra: dev
+Requires-Dist: notebook ; extra == 'dev'
+Requires-Dist: twine ; extra == 'dev'
+Provides-Extra: doc
+Requires-Dist: sphinx (>=6.1.0) ; extra == 'doc'
+Requires-Dist: numpydoc (>=0.9.1) ; extra == 'doc'
+Provides-Extra: lint
+Requires-Dist: black (>=23.1.0) ; extra == 'lint'
+Requires-Dist: ruff ; extra == 'lint'
+Provides-Extra: test
+Requires-Dist: pytest-cov ; extra == 'test'
+
+# Mizani
+
+[![Release](https://img.shields.io/pypi/v/mizani.svg)](https://pypi.python.org/pypi/mizani)
+[![License](https://img.shields.io/pypi/l/mizani.svg)](https://pypi.python.org/pypi/mizani)
+[![Build Status](https://github.com/has2k1/mizani/workflows/build/badge.svg?branch=main)](https://github.com/has2k1/mizani/actions?query=branch%3Amain+workflow%3A%22build%22)
+[![Documentation](https://readthedocs.org/projects/mizani/badge/?version=latest)](https://mizani.readthedocs.io/en/latest/)
+[![Coverage](https://codecov.io/github/has2k1/mizani/coverage.svg?branch=main)](https://codecov.io/github/has2k1/mizani?branch=main)
+
+Mizani is a scales package for graphics. It is written in Python and is
+based on Hadley Wickham's [Scales](https://github.com/r-lib/scales).
+See the [documentation](https://mizani.readthedocs.io/en/latest/)
+for how to use it in a graphics system.
+
+## Installation
+
+Official Release
+
+```console
+$ pip install mizani
+```
+
+Development version
+
+```console
+$ pip install git+https://github.com/has2k1/mizani.git@main
+```

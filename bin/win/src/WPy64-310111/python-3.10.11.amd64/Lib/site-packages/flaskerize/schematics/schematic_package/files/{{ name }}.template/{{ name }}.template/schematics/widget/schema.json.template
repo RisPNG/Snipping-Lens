@@ -1,0 +1,4 @@
+{
+  "templateFilePatterns": ["**/*.template"],
+  "options": []
+}

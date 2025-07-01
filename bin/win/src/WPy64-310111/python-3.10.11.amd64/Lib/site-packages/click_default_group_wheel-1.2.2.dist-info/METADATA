@@ -1,0 +1,34 @@
+Metadata-Version: 2.1
+Name: click-default-group-wheel
+Version: 1.2.2
+Summary: Extends click.Group to invoke a command without explicit subcommand name (packaged as a wheel)
+Home-page: https://github.com/sublee/click-default-group/
+Author: Heungsub Lee
+Author-email: sub@subl.ee
+License: BSD
+Platform: any
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: Public Domain
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: click
+
+click-default-group-wheel
+=========================
+
+This package provides [click-default-group](https://github.com/click-contrib/click-default-group) with an additional pure Python wheel package, compatible with [Pyodide](https://github.com/pyodide/pyodide).
+
+    pip install click-default-group-wheel
+
+
+

@@ -1,0 +1,8 @@
+[console_scripts]
+vitables = vitables.start:gui
+
+[vitables.plugins]
+columnar_org = vitables.plugins.columnorg.columnar_org:ArrayColsOrganizer
+dbs_tree_sort = vitables.plugins.dbstreesort.dbs_tree_sort:DBsTreeSort
+time_series = vitables.plugins.timeseries.time_series:TSFormatter
+

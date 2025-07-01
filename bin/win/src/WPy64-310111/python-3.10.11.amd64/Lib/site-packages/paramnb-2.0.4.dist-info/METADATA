@@ -1,0 +1,82 @@
+Metadata-Version: 2.1
+Name: paramnb
+Version: 2.0.4
+Summary: Generate ipywidgets from Parameterized objects in the notebook
+Home-page: https://paramnb.pyviz.org
+Author: PyViz
+Author-email: holoviews@gmail.com
+Maintainer: PyViz
+Maintainer-email: holoviews@gmail.com
+License: BSD 3-Clause License
+Project-URL: Bug Tracker, https://github.com/ioam/paramnb/issues
+Project-URL: Documentation, https://paramnb.pyviz.org
+Project-URL: Source Code, https://github.com/ioam/paramnb
+Platform: UNKNOWN
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Development Status :: 4 - Beta
+Requires-Python: >=2.7
+Description-Content-Type: text/markdown
+Provides-Extra: tests
+Provides-Extra: examples
+Requires-Dist: param (>=1.7.0)
+Requires-Dist: ipywidgets (>=5.2.2)
+Provides-Extra: examples
+Requires-Dist: pyct[cmd]; extra == 'examples'
+Requires-Dist: holoviews (>=1.9.0); extra == 'examples'
+Requires-Dist: pandas; extra == 'examples'
+Requires-Dist: jupyter; extra == 'examples'
+Requires-Dist: numpy; extra == 'examples'
+Requires-Dist: matplotlib; extra == 'examples'
+Requires-Dist: bokeh; extra == 'examples'
+Provides-Extra: tests
+Requires-Dist: nbsmoke (>=0.2.6); extra == 'tests'
+Requires-Dist: flake8; extra == 'tests'
+Requires-Dist: pytest (>=2.8.5); extra == 'tests'
+
+[![Build Status](https://travis-ci.org/ioam/paramnb.svg?branch=master)](https://travis-ci.org/ioam/paramnb)
+
+[![Build status](https://ci.appveyor.com/api/projects/status/oyx4q6tqj74ld5b9/branch/master?svg=true)](https://ci.appveyor.com/project/Ioam/paramnb/branch/master)
+
+
+# ParamNB
+
+Automatically generate ipywidgets from
+[Parameterized](https://github.com/ioam/param) objects in a Jupyter
+notebook.
+
+![Auto-generated
+ widgets](https://github.com/ioam/paramnb/blob/master/examples/user_guide/images/intro.gif)
+
+
+## Demo notebooks
+
+The following links go to static versions of the notebooks, so after
+looking at them it's best to try them out yourself interactively!
+
+  * Introduction: [examples/user_guide/index.ipynb](http://nbviewer.jupyter.org/urls/notebooks.anaconda.org/cball/ioam-paramnb-index/download?version=)
+
+  * Additional Features: [examples/user_guide/AdditionalFeatures.ipynb](http://nbviewer.jupyter.org/urls/notebooks.anaconda.org/cball/ioam-paramnb-additionalfeatures/download?version=)
+
+  * Setting parameters via JSON: [examples/user_guide/JSONInit.ipynb](http://nbviewer.jupyter.org/urls/notebooks.anaconda.org/cball/ioam-paramnb-jsoninit/download?version=)
+
+
+## Installation
+
+You can easily install paramnb using conda:
+
+```
+conda install -c pyviz paramnb
+```
+
+or pip:
+
+```
+pip install paramnb
+```
+
+

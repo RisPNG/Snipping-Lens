@@ -1,0 +1,27 @@
+{#
+    layout.html
+    ~~~~~~~~~~~
+
+    Layout template for sphinxify
+
+    :copyright: Copyright 2013- by the Spyder Development Team.
+    :copyright: Copyright 2009 by Tim Dumol <tim@timdumol.com>
+    :license: BSD license
+#}
+
+{# Docstring text #}
+{% if warning %}
+<div id="doc-warning">
+    {{warn_message}}
+</div>
+{% else %}
+<div class="docstring">
+    {% block body %}{% endblock %}
+    {% if outline %}
+    <div class="section" id="outline">
+        <h2> Outline </h2>
+        {{ toc }}
+    </div>
+    {% endif %}
+</div>
+{% endif %}

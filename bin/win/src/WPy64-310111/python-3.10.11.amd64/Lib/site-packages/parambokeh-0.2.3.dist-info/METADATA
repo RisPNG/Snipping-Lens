@@ -1,0 +1,53 @@
+Metadata-Version: 2.1
+Name: parambokeh
+Version: 0.2.3
+Summary: ParamBokeh provides an easy way to generate a UI for param based classes in the notebook or on bokeh server.
+Home-page: https://parambokeh.pyviz.org
+Author: PyViz
+Author-email: holoviews@gmail.com
+Maintainer: PyViz
+Maintainer-email: holoviews@gmail.com
+License: BSD 3-Clause License
+Project-URL: Bug Tracker, https://github.com/ioam/parambokeh/issues
+Project-URL: Documentation, https://parambokeh.pyviz.org
+Project-URL: Source Code, https://github.com/ioam/parambokeh
+Platform: UNKNOWN
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Development Status :: 4 - Beta
+Requires-Python: >=2.7
+Description-Content-Type: text/markdown
+Provides-Extra: tests
+Provides-Extra: doc
+Provides-Extra: examples
+Requires-Dist: param (>=1.6.1)
+Requires-Dist: bokeh (>=0.12.10)
+Requires-Dist: pyviz-comms
+Provides-Extra: doc
+Requires-Dist: nbsite; extra == 'doc'
+Requires-Dist: sphinx-ioam-theme; extra == 'doc'
+Provides-Extra: examples
+Requires-Dist: pyct[cmd]; extra == 'examples'
+Requires-Dist: holoviews (>=1.9.0); extra == 'examples'
+Requires-Dist: pandas; extra == 'examples'
+Requires-Dist: jupyter; extra == 'examples'
+Requires-Dist: pyparsing; extra == 'examples'
+Provides-Extra: tests
+Requires-Dist: nbsmoke (>=0.2.6); extra == 'tests'
+Requires-Dist: flake8; extra == 'tests'
+Requires-Dist: pytest (>=2.8.5); extra == 'tests'
+
+[![Linux Build
+Status](https://travis-ci.org/ioam/parambokeh.svg?branch=master)](https://travis-ci.org/ioam/parambokeh)
+[![Windows Build
+status](https://ci.appveyor.com/api/projects/status/27h3ybqx51wsasu5/branch/master?svg=true)](https://ci.appveyor.com/project/Ioam/parambokeh/branch/master)
+
+# ParamBokeh
+
+Generate widgets from [Parameterized](https://github.com/ioam/param) objects in Jupyter or in [Bokeh](http://bokeh.pydata.org) Server. See the [documentation](https://ioam.github.io/parambokeh/) for more details.
+
+

@@ -1,0 +1,4 @@
+[gui_scripts]
+guiqwt-tests = guiqwt.tests:run
+sift = guiqwt.tests.sift:run
+

@@ -1,0 +1,72 @@
+Metadata-Version: 2.1
+Name: PythonQwt
+Version: 0.10.2
+Summary: Qt plotting widgets for Python
+Home-page: https://github.com/PierreRaybaut/PythonQwt
+Author: Pierre Raybaut
+Author-email: pierre.raybaut@gmail.com
+License: UNKNOWN
+Platform: Any
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Topic :: Scientific/Engineering :: Visualization
+Classifier: Topic :: Software Development :: Widget Sets
+Classifier: Operating System :: MacOS
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: OS Independent
+Classifier: Operating System :: POSIX
+Classifier: Operating System :: Unix
+Classifier: Programming Language :: Python :: 3
+License-File: LICENSE
+Requires-Dist: NumPy (>=1.5)
+Requires-Dist: QtPy (>=1.3)
+Provides-Extra: doc
+Requires-Dist: Sphinx (>=1.1) ; extra == 'doc'
+
+PythonQwt: Qt plotting widgets for Python
+=========================================
+
+.. image:: https://raw.githubusercontent.com/PierreRaybaut/PythonQwt/master/qwt/tests/data/testlauncher.png
+
+The ``PythonQwt`` package is a 2D-data plotting library using Qt graphical
+user interfaces for the Python programming language. It is compatible with
+``PyQt4``, ``PyQt5``, ``PyQt6`` and ``PySide6``.
+
+The ``PythonQwt`` project was initiated to solve -at least temporarily- the
+obsolescence issue of `PyQwt` (the Python-Qwt C++ bindings library) which is
+no longer maintained. The idea was to translate the original Qwt C++ code to
+Python and then to optimize some parts of the code by writing new modules
+based on NumPy and other libraries.
+
+The ``PythonQwt`` package consists of a single Python package named `qwt`
+which is a pure Python implementation of Qwt C++ library with some
+limitations: efforts were concentrated on basic plotting features, leaving
+higher level features to the `guiqwt` library.
+
+See `README`_ and documentation (`online`_ or `PDF`_) for more details on the library and `changelog`_ for recent history of changes.
+
+The following example is a good starting point to see how to set up a simple plot widget::
+
+    from qtpy import QtWidgets as QW
+    import qwt
+    import numpy as np
+
+    app = QW.QApplication([])
+    x = np.linspace(-10, 10, 500)
+    plot = qwt.QwtPlot("Trigonometric functions")
+    plot.insertLegend(qwt.QwtLegend(), qwt.QwtPlot.BottomLegend)
+    qwt.QwtPlotCurve.make(x, np.cos(x), "Cosinus", plot, linecolor="red", antialiased=True)
+    qwt.QwtPlotCurve.make(x, np.sin(x), "Sinus", plot, linecolor="blue", antialiased=True)
+    plot.resize(600, 300)
+    plot.show()
+    app.exec_()
+
+.. image:: https://raw.githubusercontent.com/PierreRaybaut/PythonQwt/master/doc/images/QwtPlot_example.png
+
+.. _README: https://github.com/PierreRaybaut/PythonQwt/blob/master/README.md
+.. _online: https://pythonqwt.readthedocs.io/en/latest/
+.. _PDF: https://pythonqwt.readthedocs.io/_/downloads/en/latest/pdf/
+.. _changelog: https://github.com/PierreRaybaut/PythonQwt/blob/master/CHANGELOG.md
+
+

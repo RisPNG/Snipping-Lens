@@ -1,0 +1,13 @@
+from marshmallow import fields, Schema
+
+
+class {{ capitalize(name) }}Schema(Schema):
+    """{{ capitalize(name) }}"""
+
+    class Meta:
+        ordered = True
+
+    {{ lower(name) }}Id = fields.Number(attribute="{{ lower(name) }}_id")
+    name = fields.String(attribute="name")
+    description = fields.String(attribute="description")
+

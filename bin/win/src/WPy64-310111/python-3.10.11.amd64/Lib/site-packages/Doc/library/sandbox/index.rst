@@ -1,0 +1,16 @@
+
+.. _libdoc_sandbox:
+
+==============================================================
+:mod:`sandbox` -- Experimental Code
+==============================================================
+
+.. module:: sandbox
+   :platform: Unix, Windows
+   :synopsis: Experimental code
+.. moduleauthor:: LISA
+
+.. toctree::
+    :maxdepth: 1
+
+    linalg

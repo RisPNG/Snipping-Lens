@@ -1,0 +1,21 @@
+from pytest import fixture
+from flask_sqlalchemy import SQLAlchemy
+
+from app.test.fixtures import app, db  # noqa
+from .model import {{ capitalize(name) }}
+
+
+@fixture
+def {{ lower(name) }}() -> {{ capitalize(name) }}:
+    return {{ capitalize(name) }}({{ lower(name) }}_id=1, name="Test name", description="Test description")
+
+
+def test_{{ capitalize(name) }}_create({{ lower(name) }}: {{ capitalize(name) }}):
+    assert {{ lower(name) }}
+
+
+def test_{{ capitalize(name) }}_retrieve({{ lower(name) }}: {{ capitalize(name) }}, db: SQLAlchemy):  # noqa
+    db.session.add({{ lower(name) }})
+    db.session.commit()
+    s = {{ capitalize(name) }}.query.first()
+    assert s.__dict__ == {{ lower(name) }}.__dict__

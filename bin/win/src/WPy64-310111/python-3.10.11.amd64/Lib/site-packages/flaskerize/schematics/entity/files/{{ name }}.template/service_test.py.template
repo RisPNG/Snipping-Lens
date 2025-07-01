@@ -1,0 +1,61 @@
+from app.test.fixtures import app, db  # noqa
+from flask_sqlalchemy import SQLAlchemy
+
+from typing import List
+from .model import {{ capitalize(name) }}
+from .service import {{ capitalize(name) }}Service  # noqa
+from .interface import {{ capitalize(name) }}Interface
+
+
+def test_get_all(db: SQLAlchemy):  # noqa
+    yin: {{ capitalize(name) }} = {{ capitalize(name) }}({{ lower(name) }}_id=1, name="Yin", description="Test description")
+    yang: {{ capitalize(name) }} = {{ capitalize(name) }}({{ lower(name) }}_id=2, name="Yaang", description="Test description")
+    db.session.add(yin)
+    db.session.add(yang)
+    db.session.commit()
+
+    results: List[{{ capitalize(name) }}] = {{ capitalize(name) }}Service.get_all()
+
+    assert len(results) == 2
+    assert yin in results and yang in results
+
+
+def test_update(db: SQLAlchemy):  # noqa
+    yin: {{ capitalize(name) }} = {{ capitalize(name) }}({{ lower(name) }}_id=1, name="Yin", description="Test description")
+
+    db.session.add(yin)
+    db.session.commit()
+    updates = dict({{ lower(name) }}="Yang")
+
+    {{ capitalize(name) }}Service.update(yin, updates)
+
+    result: {{ capitalize(name) }} = {{ capitalize(name) }}.query.get(yin.{{ lower(name) }}_id)
+    assert result.name == "Yang"
+
+
+def test_delete_by_id(db: SQLAlchemy):  # noqa
+    yin: {{ capitalize(name) }} = {{ capitalize(name) }}({{ lower(name) }}_id=1, name="Yin", description="Test description")
+    yang: {{ capitalize(name) }} = {{ capitalize(name) }}({{ lower(name) }}_id=2, name="Yang", description="Test description")
+    db.session.add(yin)
+    db.session.add(yang)
+    db.session.commit()
+
+    {{ capitalize(name) }}Service.delete_by_id(1)
+    results: List[{{ capitalize(name) }}] = {{ capitalize(name) }}.query.all()
+
+    assert len(results) == 1
+    assert yin not in results and yang in results
+
+
+def test_create(db: SQLAlchemy):  # noqa
+
+    yin: {{ capitalize(name) }}Interface = {{ capitalize(name) }}Interface(
+        {{ lower(name) }}_id=1, name="Yin", description="Test description"
+    )
+    {{ capitalize(name) }}Service.create(yin)
+    results: List[{{ capitalize(name) }}] = {{ capitalize(name) }}.query.all()
+
+    assert len(results) == 1
+
+    for k in yin.keys():
+        assert getattr(results[0], k) == yin[k]

@@ -1,0 +1,3 @@
+[console_scripts]
+dateparser-download = dateparser_cli.cli:entrance
+

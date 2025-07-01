@@ -1,0 +1,3 @@
+scilab2py
+scilab2py/ipython
+scilab2py/ipython/tests

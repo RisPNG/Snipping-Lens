@@ -1,0 +1,2 @@
+[console_scripts]
+datasette = datasette.cli:cli

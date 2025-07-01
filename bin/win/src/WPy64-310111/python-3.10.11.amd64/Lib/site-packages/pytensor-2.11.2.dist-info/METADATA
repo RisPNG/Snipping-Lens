@@ -1,0 +1,242 @@
+Metadata-Version: 2.1
+Name: pytensor
+Version: 2.11.2
+Summary: Optimizing compiler for evaluating mathematical expressions on CPUs and GPUs.
+Author-email: pymc-devs <pymc.devs@gmail.com>
+License: .. _license:
+        
+        LICENSE
+        =======
+        
+        Copyright (c) 2008-2019, Theano Development Team
+        Copyright (c) 2020-2021, PyMC Development team
+        Copyright (c) 2021-2022, Aesara Development Team
+        Copyright (c) 2022, PyMC Development team
+        All rights reserved.
+        
+        Contains code from NumPy, Copyright (c) 2005-2016, NumPy Developers.
+        Contains code from Aesara, Copyright (c) 2021-2022, Aesara Developers.
+        All rights reserved.
+        
+        theano/scan/*.py[c]: Razvan Pascanu, Frederic Bastien, James Bergstra, Pascal Lamblin, Arnaud Bergeron, PyMC Developers, PyTensor Developers, (c) 2010, Universite de Montreal
+        theano/tensor/sharedvar.py: James Bergstra, (c) 2010, Universite de Montreal, 3-clause BSD License
+        theano/gradient.py: James Bergstra, Razvan Pascanu, Arnaud Bergeron, Ian Goodfellow, PyMC Developers, PyTensor Developers, (c) 2011, Universite de Montreal, 3-clause BSD License
+        theano/compile/monitormode.py: this code was initially copied from the 'pyutools' package by its original author, and re-licensed under Theano's license.
+        
+        Contains frozendict code from slezica’s python-frozendict(https://github.com/slezica/python-frozendict/blob/master/frozendict/__init__.py), Copyright (c) 2012 Santiago Lezica. All rights reserved.
+        
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+        
+            * Redistributions of source code must retain the above copyright
+              notice, this list of conditions and the following disclaimer.
+            * Redistributions in binary form must reproduce the above copyright
+              notice, this list of conditions and the following disclaimer in the
+              documentation and/or other materials provided with the distribution.
+            * Neither the name of PyTensor, Theano, nor the names of its contributors may be
+              used to endorse or promote products derived from this software without
+              specific prior written permission.
+        
+        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ''AS IS'' AND ANY
+        EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+        WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+        DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+        (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+        LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+        ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+        (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+        SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+        
+Project-URL: homepage, https://github.com/pymc-devs/pytensor
+Project-URL: repository, https://github.com/pymc-devs/pytensor
+Project-URL: documentation, https://pytensor.readthedocs.io/en/latest/
+Keywords: pytensor,math,numerical,symbolic,blas,numpy,autodiff,differentiation
+Classifier: Development Status :: 6 - Mature
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: Python
+Classifier: Topic :: Software Development :: Code Generators
+Classifier: Topic :: Software Development :: Compilers
+Classifier: Topic :: Scientific/Engineering :: Mathematics
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX
+Classifier: Operating System :: Unix
+Classifier: Operating System :: MacOS
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.8
+Description-Content-Type: text/x-rst
+License-File: LICENSE.txt
+Requires-Dist: setuptools (>=48.0.0)
+Requires-Dist: scipy (>=0.14)
+Requires-Dist: numpy (>=1.17.0)
+Requires-Dist: filelock
+Requires-Dist: etuples
+Requires-Dist: logical-unification
+Requires-Dist: miniKanren
+Requires-Dist: cons
+Requires-Dist: typing-extensions
+Provides-Extra: complete
+Requires-Dist: pytensor[jax] ; extra == 'complete'
+Requires-Dist: pytensor[numba] ; extra == 'complete'
+Provides-Extra: development
+Requires-Dist: pytensor[complete] ; extra == 'development'
+Requires-Dist: pytensor[tests] ; extra == 'development'
+Requires-Dist: pytensor[rtd] ; extra == 'development'
+Provides-Extra: jax
+Requires-Dist: jax ; extra == 'jax'
+Requires-Dist: jaxlib ; extra == 'jax'
+Provides-Extra: numba
+Requires-Dist: numba (>=0.55) ; extra == 'numba'
+Requires-Dist: numba-scipy (>=0.3.0) ; extra == 'numba'
+Provides-Extra: rtd
+Requires-Dist: sphinx (<6,>=5.1.0) ; extra == 'rtd'
+Requires-Dist: pygments ; extra == 'rtd'
+Requires-Dist: pydot ; extra == 'rtd'
+Requires-Dist: pydot2 ; extra == 'rtd'
+Requires-Dist: pydot-ng ; extra == 'rtd'
+Provides-Extra: tests
+Requires-Dist: pytest ; extra == 'tests'
+Requires-Dist: pre-commit ; extra == 'tests'
+Requires-Dist: pytest-cov (>=2.6.1) ; extra == 'tests'
+Requires-Dist: coverage (>=5.1) ; extra == 'tests'
+Requires-Dist: pytest-benchmark ; extra == 'tests'
+
+.. image:: https://cdn.rawgit.com/pymc-devs/pytensor/main/doc/images/PyTensor_RGB.svg
+    :height: 100px
+    :alt: PyTensor logo
+    :align: center
+
+|Tests Status| |Coverage|
+
+|Project Name| is a fork of `Aesara <https://github.com/aesara-devs/aesara>`__ -- a Python library that allows one to define, optimize, and
+efficiently evaluate mathematical expressions involving multi-dimensional arrays.
+
+Features
+========
+
+- A hackable, pure-Python codebase
+- Extensible graph framework suitable for rapid development of custom operators and symbolic optimizations
+- Implements an extensible graph transpilation framework that currently provides
+  compilation via C, `JAX <https://github.com/google/jax>`__, and `Numba <https://github.com/numba/numba>`__
+- Based on one of the most widely-used Python tensor libraries: `Theano <https://github.com/Theano/Theano>`__
+
+Getting started
+===============
+
+.. code-block:: python
+
+  import pytensor
+  from pytensor import tensor as pt
+
+  # Declare two symbolic floating-point scalars
+  a = pt.dscalar("a")
+  b = pt.dscalar("b")
+
+  # Create a simple example expression
+  c = a + b
+
+  # Convert the expression into a callable object that takes `(a, b)`
+  # values as input and computes the value of `c`.
+  f_c = pytensor.function([a, b], c)
+
+  assert f_c(1.5, 2.5) == 4.0
+
+  # Compute the gradient of the example expression with respect to `a`
+  dc = pytensor.grad(c, a)
+
+  f_dc = pytensor.function([a, b], dc)
+
+  assert f_dc(1.5, 2.5) == 1.0
+
+  # Compiling functions with `pytensor.function` also optimizes
+  # expression graphs by removing unnecessary operations and
+  # replacing computations with more efficient ones.
+
+  v = pt.vector("v")
+  M = pt.matrix("M")
+
+  d = a/a + (M + a).dot(v)
+
+  pytensor.dprint(d)
+  # Elemwise{add,no_inplace} [id A] ''
+  #  |InplaceDimShuffle{x} [id B] ''
+  #  | |Elemwise{true_div,no_inplace} [id C] ''
+  #  |   |a [id D]
+  #  |   |a [id D]
+  #  |dot [id E] ''
+  #    |Elemwise{add,no_inplace} [id F] ''
+  #    | |M [id G]
+  #    | |InplaceDimShuffle{x,x} [id H] ''
+  #    |   |a [id D]
+  #    |v [id I]
+
+  f_d = pytensor.function([a, v, M], d)
+
+  # `a/a` -> `1` and the dot product is replaced with a BLAS function
+  # (i.e. CGemv)
+  pytensor.dprint(f_d)
+  # Elemwise{Add}[(0, 1)] [id A] ''   5
+  #  |TensorConstant{(1,) of 1.0} [id B]
+  #  |CGemv{inplace} [id C] ''   4
+  #    |AllocEmpty{dtype='float64'} [id D] ''   3
+  #    | |Shape_i{0} [id E] ''   2
+  #    |   |M [id F]
+  #    |TensorConstant{1.0} [id G]
+  #    |Elemwise{add,no_inplace} [id H] ''   1
+  #    | |M [id F]
+  #    | |InplaceDimShuffle{x,x} [id I] ''   0
+  #    |   |a [id J]
+  #    |v [id K]
+  #    |TensorConstant{0.0} [id L]
+
+See `the PyTensor documentation <https://pytensor.readthedocs.io/en/latest/>`__ for in-depth tutorials.
+
+
+Installation
+============
+
+The latest release of |Project Name| can be installed from PyPI using ``pip``:
+
+::
+
+    pip install pytensor
+
+
+Or via conda-forge:
+
+::
+
+    conda install -c conda-forge pytensor
+
+
+The current development branch of |Project Name| can be installed from GitHub, also using ``pip``:
+
+::
+
+    pip install git+https://github.com/pymc-devs/pytensor
+
+
+Contributing
+============
+
+We welcome bug reports and fixes and improvements to the documentation.
+
+For more information on contributing, please see the
+`contributing guide <https://pytensor.readthedocs.io/en/latest/dev_start_guide.html>`__.
+
+A good place to start contributing is by looking through the issues
+`here <https://github.com/pymc-devs/pytensor/issues>`__.
+
+
+.. |Project Name| replace:: PyTensor
+.. |Tests Status| image:: https://github.com/pymc-devs/pytensor/workflows/Tests/badge.svg
+  :target: https://github.com/pymc-devs/pytensor/actions?query=workflow%3ATests
+.. |Coverage| image:: https://codecov.io/gh/pymc-devs/pytensor/branch/main/graph/badge.svg?token=WVwr8nZYmc
+  :target: https://codecov.io/gh/pymc-devs/pytensor

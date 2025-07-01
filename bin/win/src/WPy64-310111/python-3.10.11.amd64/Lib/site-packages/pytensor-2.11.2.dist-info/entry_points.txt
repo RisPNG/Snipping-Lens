@@ -1,0 +1,2 @@
+[console_scripts]
+pytensor-cache = bin.pytensor_cache:main

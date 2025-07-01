@@ -1,0 +1,56 @@
+sources:
+  input_data:
+    description: a local data file
+    driver: csv
+    args:
+      urlpath: '{{ CATALOG_DIR }}cache_data/states.csv'
+  arr_cache:
+    description: small array
+    driver: numpy
+    args:
+      path: "{{ CATALOG_DIR }}/small.npy"
+      chunks: 5
+  alias0:
+    driver: intake.source.derived.AliasSource
+    args:
+      target: input_data
+  barebones:
+    driver: intake.source.derived.GenericTransform
+    args:
+      targets:
+        - input_data
+      transform: builtins.len
+      transform_kwargs: {}
+  alias1:
+    driver: alias
+    args:
+      target: "{{choice}}"
+      mapping:
+        first: input_data
+        second: arr_cache
+    parameters:
+      choice:
+        description: which to alias
+        type: str
+        default: first
+        allowed: ["first", "second"]
+  derive_cols:
+    driver: intake.source.derived.Columns
+    args:
+      targets:
+        - input_data
+      columns: ["state", "slug"]
+  derive_cols_func:
+    driver: intake.source.derived.DataFrameTransform
+    args:
+      targets:
+        - input_data
+      transform: "intake.source.tests.test_derived._pick_columns"
+      transform_kwargs:
+        columns: ["state", "slug"]
+  other_cat:
+    driver: intake.source.derived.Columns
+    args:
+      targets:
+        - "{{CATALOG_DIR}}/catalog1.yml:entry1"
+      columns: ["name", "score"]

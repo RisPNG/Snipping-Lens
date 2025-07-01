@@ -1,0 +1,16 @@
+Metadata-Version: 2.0
+Name: docrepr
+Version: 0.1.1
+Summary: docrepr renders Python docstrings in HTML
+Home-page: https://github.com/spyder-ide/docrepr
+Author: The Spyder Development Team
+Author-email: UNKNOWN
+License: BSD
+Platform: UNKNOWN
+Requires-Dist: docutils
+Requires-Dist: jinja2
+Requires-Dist: sphinx
+
+docrepr renders Python docstrings in HTML. It is based on the sphinxify module developed by Tim Dumol for the Sage Notebook and the utils.inspector developed for ther Spyder IDE.
+
+

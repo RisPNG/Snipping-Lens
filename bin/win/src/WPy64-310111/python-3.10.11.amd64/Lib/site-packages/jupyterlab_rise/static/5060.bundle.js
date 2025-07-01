@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunk_JUPYTERLAB_CORE_OUTPUT=self.webpackChunk_JUPYTERLAB_CORE_OUTPUT||[]).push([[5060,9434],{79434:(e,r,t)=>{t.r(r),t.d(r,{default:()=>o});var n=t(79013),s=t(51829),i=t(56297);const o=[{id:"@jupyterlab/docprovider-extension:plugin",provides:s.IDocumentProviderFactory,activate:e=>{const r=i.ServerConnection.makeSettings(),t=n.URLExt.join(r.wsUrl,"api/yjs");return r=>r.collaborative?new s.WebSocketProvider(Object.assign(Object.assign({},r),{url:t,user:e.serviceManager.user})):new s.ProviderMock}}]}}]);
+//# sourceMappingURL=5060.js.map

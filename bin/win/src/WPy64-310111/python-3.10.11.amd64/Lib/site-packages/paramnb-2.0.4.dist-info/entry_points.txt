@@ -1,0 +1,3 @@
+[console_scripts]
+paramnb = paramnb.__main__:main
+

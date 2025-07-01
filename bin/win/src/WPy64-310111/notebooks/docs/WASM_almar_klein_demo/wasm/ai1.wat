@@ -1,0 +1,18 @@
+(module
+ (import "env" "toggle_shoot" (func $toggle_shoot (param i32)))
+ (import "env" "toggle_turn_left" (func $toggle_turn_left (param i32)))
+ (import "env" "toggle_turn_right" (func $toggle_turn_right (param i32)))
+ (export "clear_screen" (func $clear_screen))
+ (export "draw_player" (func $draw_player))
+ (export "draw_enemy" (func $draw_enemy))
+ (export "update" (func $update))
+ (func $clear_screen)
+ (func $draw_player (param $0 f32) (param $1 f32) (param $2 f32))
+ (func $draw_enemy (param $0 f32) (param $1 f32))
+ (func $update
+    (i32.const 1)
+    (call $toggle_turn_left)
+    (i32.const 1)
+    (call $toggle_shoot)
+ )
+)

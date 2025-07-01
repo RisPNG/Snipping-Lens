@@ -1,0 +1,39 @@
+Metadata-Version: 2.1
+Name: pyhdf
+Version: 0.10.5
+Summary: pyhdf: Python interface to the NCSA HDF4 library.
+Home-page: https://github.com/fhs/pyhdf
+Author: Andre Gosselin et al.
+Maintainer: pyhdf authors
+License: MIT
+Keywords: hdf4,netcdf,numpy,python,pyhdf
+Platform: Windows
+Platform: Linux
+Platform: Solaris
+Platform: Mac OS-X
+Platform: Unix
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved
+Classifier: Programming Language :: C
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Software Development
+Classifier: Topic :: Scientific/Engineering
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX
+Classifier: Operating System :: Unix
+Classifier: Operating System :: MacOS
+Provides: pyhdf
+License-File: LICENSE
+License-File: AUTHORS
+Requires-Dist: numpy
+
+The pyhdf package wraps the functionality of the NCSA HDF version
+4 library inside a Python OOP framework. The SD (scientific dataset),
+VS (Vdata) and V (Vgroup) APIs are currently implemented.  SD datasets
+are read/written through numpy arrays. NetCDF files can also be read
+and modified with pyhdf.
+
+

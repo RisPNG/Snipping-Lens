@@ -1,0 +1,246 @@
+Metadata-Version: 2.1
+Name: plotnine
+Version: 0.12.1
+Summary: A Grammar of Graphics for Python
+Author-email: Hassan Kibirige <has2k1@gmail.com>
+License: The MIT License (MIT)
+        
+        Copyright (c) 2022 Hassan Kibirige
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: homepage, https://plotnine.readthedocs.io/en/stable
+Project-URL: repository, https://github.com/has2k1/plotnine
+Project-URL: changelog, https://plotnine.readthedocs.io/en/stable/changelog.html
+Project-URL: ci, https://github.com/has2k1/plotnine/actions
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: Unix
+Classifier: Operating System :: MacOS
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Framework :: Matplotlib
+Classifier: Topic :: Scientific/Engineering :: Visualization
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: matplotlib (>=3.6.0)
+Requires-Dist: mizani (>=0.9.0)
+Requires-Dist: numpy (>=1.23.0)
+Requires-Dist: pandas (>=1.5.0)
+Requires-Dist: patsy (>=0.5.1)
+Requires-Dist: scipy (>=1.5.0)
+Requires-Dist: statsmodels (>=0.14.0)
+Provides-Extra: all
+Requires-Dist: plotnine[extra] ; extra == 'all'
+Requires-Dist: plotnine[doc] ; extra == 'all'
+Requires-Dist: plotnine[lint] ; extra == 'all'
+Requires-Dist: plotnine[test] ; extra == 'all'
+Requires-Dist: plotnine[build] ; extra == 'all'
+Requires-Dist: plotnine[dev] ; extra == 'all'
+Provides-Extra: build
+Requires-Dist: build ; extra == 'build'
+Requires-Dist: wheel ; extra == 'build'
+Provides-Extra: dev
+Requires-Dist: twine ; extra == 'dev'
+Requires-Dist: plotnine[typing] ; extra == 'dev'
+Provides-Extra: doc
+Requires-Dist: jupyter ; extra == 'doc'
+Requires-Dist: nbsphinx ; extra == 'doc'
+Requires-Dist: numpydoc (>=0.9.1) ; extra == 'doc'
+Requires-Dist: sphinx (>=6.1.0) ; extra == 'doc'
+Requires-Dist: importlib-resources ; extra == 'doc'
+Provides-Extra: extra
+Requires-Dist: adjustText ; extra == 'extra'
+Requires-Dist: geopandas ; extra == 'extra'
+Requires-Dist: scikit-learn ; extra == 'extra'
+Requires-Dist: scikit-misc (>=0.2.0) ; extra == 'extra'
+Provides-Extra: lint
+Requires-Dist: black (>=23.1.0) ; extra == 'lint'
+Requires-Dist: ruff ; extra == 'lint'
+Provides-Extra: test
+Requires-Dist: pytest-cov ; extra == 'test'
+Provides-Extra: typing
+Requires-Dist: pyright ; extra == 'typing'
+Requires-Dist: ipython ; extra == 'typing'
+Requires-Dist: pandas-stubs ; extra == 'typing'
+
+# plotnine
+
+[![Release](https://img.shields.io/pypi/v/plotnine.svg)](https://pypi.python.org/pypi/plotnine)
+[![License](https://img.shields.io/pypi/l/plotnine.svg)](https://pypi.python.org/pypi/plotnine)
+[![DOI](https://zenodo.org/badge/89276692.svg)](https://zenodo.org/badge/latestdoi/89276692)
+[![Build Status](https://github.com/has2k1/plotnine/workflows/build/badge.svg?branch=main)](https://github.com/has2k1/plotnine/actions?query=branch%3Amain+workflow%3A%22build%22)
+[![Documentation](https://readthedocs.org/projects/plotnine/badge/?version=latest)](https://plotnine.readthedocs.io/en/latest/)
+[![Coverage](https://codecov.io/github/has2k1/plotnine/coverage.svg?branch=main)](https://codecov.io/github/has2k1/plotnine?branch=main)
+
+plotnine is an implementation of a *grammar of graphics* in Python
+based on [ggplot2](https://github.com/tidyverse/ggplot2).
+The grammar allows you to compose plots by explicitly mapping variables in a
+dataframe to the visual objects that make up the plot.
+
+<img width="33%" align="right" src="./doc/images/logo-540.png">
+
+Plotting with a *grammar of graphics* is powerful. Custom (and otherwise
+complex) plots are easy to think about and build incrementaly, while the
+simple plots remain simple to create.
+
+To learn more about how to use plotnine, check out the
+[documentation](https://plotnine.readthedocs.io/en/latest/). Since plotnine
+has an API similar to ggplot2, where it lacks in coverage the
+[ggplot2 documentation](http://ggplot2.tidyverse.org/reference/index.html)
+may be helpful.
+
+
+## Example
+
+```python
+from plotnine import *
+from plotnine.data import mtcars
+```
+
+Building a complex plot piece by piece.
+
+1. Scatter plot
+
+   ```python
+   (ggplot(mtcars, aes("wt", "mpg"))
+    + geom_point())
+   ```
+
+   <img width="90%" align="center" src="./doc/images/readme-image-1.png">
+
+2. Scatter plot colored according some variable
+
+   ```python
+   (ggplot(mtcars, aes("wt", "mpg", color="factor(gear)"))
+    + geom_point())
+   ```
+
+   <img width="90%" align="center" src="./doc/images/readme-image-2.png">
+
+3. Scatter plot colored according some variable and
+   smoothed with a linear model with confidence intervals.
+
+   ```python
+   (ggplot(mtcars, aes("wt", "mpg", color="factor(gear)"))
+    + geom_point()
+    + stat_smooth(method="lm"))
+   ```
+
+   <img width="90%" align="center" src="./doc/images/readme-image-3.png">
+
+4. Scatter plot colored according some variable,
+   smoothed with a linear model with confidence intervals and
+   plotted on separate panels.
+
+   ```python
+   (ggplot(mtcars, aes("wt", "mpg", color="factor(gear)"))
+    + geom_point()
+    + stat_smooth(method="lm")
+    + facet_wrap("~gear"))
+   ```
+
+   <img width="90%" align="center" src="./doc/images/readme-image-4.png">
+
+5. Adjust the themes
+
+   I) Make it playful
+
+   ```python
+   (ggplot(mtcars, aes("wt", "mpg", color="factor(gear)"))
+    + geom_point()
+    + stat_smooth(method="lm")
+    + facet_wrap("~gear")
+    + theme_xkcd())
+   ```
+
+   <img width="90%" align="center" src="./doc/images/readme-image-5.png">
+
+   II) Or professional
+
+   ```python
+   (ggplot(mtcars, aes("wt", "mpg", color="factor(gear)"))
+    + geom_point()
+    + stat_smooth(method="lm")
+    + facet_wrap("~gear")
+    + theme_tufte())
+   ```
+
+   <img width="90%" align="center" src="./doc/images/readme-image-5alt.png">
+
+
+## Installation
+
+Official release
+
+```console
+# Using pip
+$ pip install plotnine             # 1. should be sufficient for most
+$ pip install 'plotnine[extra]'    # 2. includes extra/optional packages
+$ pip install 'plotnine[test]'     # 3. testing
+$ pip install 'plotnine[doc]'      # 4. generating docs
+$ pip install 'plotnine[dev]'      # 5. development (making releases)
+$ pip install 'plotnine[all]'      # 6. everyting
+
+# Or using conda
+$ conda install -c conda-forge plotnine
+```
+
+Development version
+
+```console
+$ pip install git+https://github.com/has2k1/plotnine.git
+```
+
+## Contributing
+
+Our documentation could use some examples, but we are looking for something
+a little bit special. We have two criteria:
+
+1. Simple looking plots that otherwise require a trick or two.
+2. Plots that are part of a data analytic narrative. That is, they provide
+   some form of clarity showing off the `geom`, `stat`, ... at their
+   differential best.
+
+If you come up with something that meets those criteria, we would love to
+see it. See [plotnine-examples](https://github.com/has2k1/plotnine-examples).
+
+If you discover a bug checkout the [issues](https://github.com/has2k1/plotnine/issues)
+if it has not been reported, yet please file an issue.
+
+And if you can fix a bug, your contribution is welcome.
+
+Testing
+-------
+
+Plotnine has tests that generate images which are compared to baseline images known
+to be correct. To generate images that are consistent across all systems you have
+to install matplotlib from source. You can do that with ``pip`` using the command.
+
+```console
+$ pip install matplotlib --no-binary matplotlib
+```
+
+Otherwise there may be small differences in the text rendering that throw off the
+image comparisons.

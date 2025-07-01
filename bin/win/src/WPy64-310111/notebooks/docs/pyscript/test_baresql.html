@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@holoviz/panel@0.14.2/dist/panel.min.js"></script>
+
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+
+  </head>
+  <body> 
+    <py-config>
+      packages = [
+        "baresql"
+      ]
+    </py-config>
+    <h1>baresql Example</h1>
+    <div id="Test baresql"></div>
+    <div>
+      <py-terminal>
+    </div>
+    <py-script>
+# was ok with https://pyscript.net/2022.12.1/pyscript.js 
+# you can try last official release: https://pyscript.net/latest/pyscript.js and css
+# or current unstable master: https://pyscript.net/unstable/pyscript.js  and cssfrom __future__ import print_function, unicode_literals, division  # if Python2.7
+
+from baresql import baresql
+bsql = baresql.baresql(keep_log = True )
+bsqldf = lambda q: bsql.df(q, dict(globals(),**locals()))
+
+users = ['Alexander', 'Bernard', 'Charly', 'Danielle', 'Esmeralda', 'Franz']
+#  We use the python 'users' list like a SQL table
+sql = "select 'Welcome ! ' , c0 from users$$"
+print(bsqldf(sql))
+    </py-script>
+</body>
+</html>

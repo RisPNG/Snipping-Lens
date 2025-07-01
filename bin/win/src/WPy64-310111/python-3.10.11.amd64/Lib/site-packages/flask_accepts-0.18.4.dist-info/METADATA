@@ -1,0 +1,16 @@
+Metadata-Version: 2.1
+Name: flask-accepts
+Version: 0.18.4
+Summary: Easy, opinionated Flask input/output handling with Flask-restx and Marshmallow
+Home-page: UNKNOWN
+Author: Alan "AJ" Pryor, Jr.
+Author-email: apryor6@gmail.com
+License: UNKNOWN
+Platform: UNKNOWN
+Requires-Dist: marshmallow (>=3.0.1)
+Requires-Dist: flask-restx (>=0.2.0)
+Requires-Dist: Werkzeug
+
+UNKNOWN
+
+

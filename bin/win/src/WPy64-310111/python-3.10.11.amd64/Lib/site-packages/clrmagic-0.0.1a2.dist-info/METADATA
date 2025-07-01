@@ -1,0 +1,26 @@
+Metadata-Version: 2.0
+Name: clrmagic
+Version: 0.0.1a2
+Summary: IPython cell magic to use .NET languages
+Home-page: https://github.com/denfromufa/clrmagic
+Author: Xavier Dupré, Denis Akhiyarov
+Author-email: denis.akhiyarov@gmail.com
+License: MIT
+Keywords: .NET CLR Mono Jupyter IPython notebook C# CSHARP pythonnet
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Environment :: Web Environment
+Classifier: Framework :: IPython
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: Microsoft
+Classifier: Programming Language :: C#
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Software Development
+Requires-Dist: pythonnet
+
+UNKNOWN
+
+

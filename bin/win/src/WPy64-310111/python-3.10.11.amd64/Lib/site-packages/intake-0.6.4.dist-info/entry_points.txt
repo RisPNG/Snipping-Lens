@@ -1,0 +1,16 @@
+[console_scripts]
+intake = intake.cli.client.__main__:main
+intake-server = intake.cli.server.__main__:main
+
+[intake.drivers]
+alias = intake.source.derived:AliasSource
+catalog = intake.catalog.base:Catalog
+csv = intake.source.csv:CSVSource
+intake_remote = intake.catalog.remote:RemoteCatalog
+ndzarr = intake.source.zarr:ZarrArraySource
+numpy = intake.source.npy:NPySource
+textfiles = intake.source.textfiles:TextFilesSource
+yaml_file_cat = intake.catalog.local:YAMLFileCatalog
+yaml_files_cat = intake.catalog.local:YAMLFilesCatalog
+zarr_cat = intake.catalog.zarr:ZarrGroupCatalog
+

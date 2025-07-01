@@ -1,0 +1,409 @@
+Metadata-Version: 2.1
+Name: holoviews
+Version: 1.16.0
+Summary: Stop plotting your data - annotate your data and let it visualize itself.
+Home-page: https://www.holoviews.org
+Author: Jean-Luc Stevens and Philipp Rudiger
+Author-email: holoviews@gmail.com
+Maintainer: HoloViz Developers
+Maintainer-email: developers@pyviz.org
+License: BSD
+Project-URL: Source, https://github.com/holoviz/holoviews
+Platform: Windows
+Platform: Mac OS X
+Platform: Linux
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: Framework :: Matplotlib
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Software Development :: Libraries
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+Requires-Dist: param (<3.0,>=1.12.0)
+Requires-Dist: numpy (>=1.0)
+Requires-Dist: pyviz-comms (>=0.7.4)
+Requires-Dist: panel (>=0.13.1)
+Requires-Dist: colorcet
+Requires-Dist: packaging
+Requires-Dist: pandas (>=0.20.0)
+Provides-Extra: all
+Requires-Dist: bokeh ; extra == 'all'
+Requires-Dist: bokeh (>2.2) ; extra == 'all'
+Requires-Dist: bokeh (>=2.4.3) ; extra == 'all'
+Requires-Dist: cftime ; extra == 'all'
+Requires-Dist: codecov ; extra == 'all'
+Requires-Dist: cudf ; extra == 'all'
+Requires-Dist: dash (>=1.16) ; extra == 'all'
+Requires-Dist: dask ; extra == 'all'
+Requires-Dist: datashader (>=0.11.1) ; extra == 'all'
+Requires-Dist: ffmpeg ; extra == 'all'
+Requires-Dist: flaky ; extra == 'all'
+Requires-Dist: graphviz ; extra == 'all'
+Requires-Dist: ibis-framework ; extra == 'all'
+Requires-Dist: ipython (>=5.4.0) ; extra == 'all'
+Requires-Dist: matplotlib (>=3) ; extra == 'all'
+Requires-Dist: mpl-sample-data (>=3.1.3) ; extra == 'all'
+Requires-Dist: nbconvert ; extra == 'all'
+Requires-Dist: nbsite (==0.8.0rc2) ; extra == 'all'
+Requires-Dist: nbval ; extra == 'all'
+Requires-Dist: netcdf4 ; extra == 'all'
+Requires-Dist: networkx ; extra == 'all'
+Requires-Dist: notebook ; extra == 'all'
+Requires-Dist: numpy (<1.24) ; extra == 'all'
+Requires-Dist: pillow ; extra == 'all'
+Requires-Dist: plotly (>=4.0) ; extra == 'all'
+Requires-Dist: pooch ; extra == 'all'
+Requires-Dist: pre-commit ; extra == 'all'
+Requires-Dist: pscript ; extra == 'all'
+Requires-Dist: pscript (==0.7.1) ; extra == 'all'
+Requires-Dist: pyarrow ; extra == 'all'
+Requires-Dist: pydata-sphinx-theme (==0.9.0) ; extra == 'all'
+Requires-Dist: pytest ; extra == 'all'
+Requires-Dist: pytest-cov ; extra == 'all'
+Requires-Dist: pytest-xdist ; extra == 'all'
+Requires-Dist: ruff ; extra == 'all'
+Requires-Dist: scikit-image ; extra == 'all'
+Requires-Dist: scipy ; extra == 'all'
+Requires-Dist: selenium ; extra == 'all'
+Requires-Dist: shapely ; extra == 'all'
+Requires-Dist: spatialpandas ; extra == 'all'
+Requires-Dist: sphinx-copybutton ; extra == 'all'
+Requires-Dist: streamz (>=0.5.0) ; extra == 'all'
+Requires-Dist: xarray (>=0.10.4) ; extra == 'all'
+Provides-Extra: bokeh2
+Requires-Dist: panel (<1.0.0a1) ; extra == 'bokeh2'
+Provides-Extra: bokeh3
+Requires-Dist: panel (>=1.0.0a1) ; extra == 'bokeh3'
+Provides-Extra: build
+Requires-Dist: param (>=1.7.0) ; extra == 'build'
+Requires-Dist: setuptools (>=30.3.0) ; extra == 'build'
+Requires-Dist: pyct (>=0.4.4) ; extra == 'build'
+Provides-Extra: doc
+Requires-Dist: ipython (>=5.4.0) ; extra == 'doc'
+Requires-Dist: notebook ; extra == 'doc'
+Requires-Dist: matplotlib (>=3) ; extra == 'doc'
+Requires-Dist: bokeh (>=2.4.3) ; extra == 'doc'
+Requires-Dist: networkx ; extra == 'doc'
+Requires-Dist: pillow ; extra == 'doc'
+Requires-Dist: xarray (>=0.10.4) ; extra == 'doc'
+Requires-Dist: plotly (>=4.0) ; extra == 'doc'
+Requires-Dist: dash (>=1.16) ; extra == 'doc'
+Requires-Dist: streamz (>=0.5.0) ; extra == 'doc'
+Requires-Dist: ffmpeg ; extra == 'doc'
+Requires-Dist: cftime ; extra == 'doc'
+Requires-Dist: netcdf4 ; extra == 'doc'
+Requires-Dist: dask ; extra == 'doc'
+Requires-Dist: scipy ; extra == 'doc'
+Requires-Dist: shapely ; extra == 'doc'
+Requires-Dist: scikit-image ; extra == 'doc'
+Requires-Dist: pyarrow ; extra == 'doc'
+Requires-Dist: pooch ; extra == 'doc'
+Requires-Dist: numpy (<1.24) ; extra == 'doc'
+Requires-Dist: datashader (>=0.11.1) ; extra == 'doc'
+Requires-Dist: nbsite (==0.8.0rc2) ; extra == 'doc'
+Requires-Dist: mpl-sample-data (>=3.1.3) ; extra == 'doc'
+Requires-Dist: pscript ; extra == 'doc'
+Requires-Dist: graphviz ; extra == 'doc'
+Requires-Dist: bokeh (>2.2) ; extra == 'doc'
+Requires-Dist: pydata-sphinx-theme (==0.9.0) ; extra == 'doc'
+Requires-Dist: sphinx-copybutton ; extra == 'doc'
+Requires-Dist: selenium ; extra == 'doc'
+Provides-Extra: examples
+Requires-Dist: ipython (>=5.4.0) ; extra == 'examples'
+Requires-Dist: notebook ; extra == 'examples'
+Requires-Dist: matplotlib (>=3) ; extra == 'examples'
+Requires-Dist: bokeh (>=2.4.3) ; extra == 'examples'
+Requires-Dist: networkx ; extra == 'examples'
+Requires-Dist: pillow ; extra == 'examples'
+Requires-Dist: xarray (>=0.10.4) ; extra == 'examples'
+Requires-Dist: plotly (>=4.0) ; extra == 'examples'
+Requires-Dist: dash (>=1.16) ; extra == 'examples'
+Requires-Dist: streamz (>=0.5.0) ; extra == 'examples'
+Requires-Dist: ffmpeg ; extra == 'examples'
+Requires-Dist: cftime ; extra == 'examples'
+Requires-Dist: netcdf4 ; extra == 'examples'
+Requires-Dist: dask ; extra == 'examples'
+Requires-Dist: scipy ; extra == 'examples'
+Requires-Dist: shapely ; extra == 'examples'
+Requires-Dist: scikit-image ; extra == 'examples'
+Requires-Dist: pyarrow ; extra == 'examples'
+Requires-Dist: pooch ; extra == 'examples'
+Requires-Dist: numpy (<1.24) ; extra == 'examples'
+Requires-Dist: datashader (>=0.11.1) ; extra == 'examples'
+Provides-Extra: examples_tests
+Requires-Dist: ipython (>=5.4.0) ; extra == 'examples_tests'
+Requires-Dist: notebook ; extra == 'examples_tests'
+Requires-Dist: matplotlib (>=3) ; extra == 'examples_tests'
+Requires-Dist: bokeh (>=2.4.3) ; extra == 'examples_tests'
+Requires-Dist: networkx ; extra == 'examples_tests'
+Requires-Dist: pillow ; extra == 'examples_tests'
+Requires-Dist: xarray (>=0.10.4) ; extra == 'examples_tests'
+Requires-Dist: plotly (>=4.0) ; extra == 'examples_tests'
+Requires-Dist: dash (>=1.16) ; extra == 'examples_tests'
+Requires-Dist: streamz (>=0.5.0) ; extra == 'examples_tests'
+Requires-Dist: ffmpeg ; extra == 'examples_tests'
+Requires-Dist: cftime ; extra == 'examples_tests'
+Requires-Dist: netcdf4 ; extra == 'examples_tests'
+Requires-Dist: dask ; extra == 'examples_tests'
+Requires-Dist: scipy ; extra == 'examples_tests'
+Requires-Dist: shapely ; extra == 'examples_tests'
+Requires-Dist: scikit-image ; extra == 'examples_tests'
+Requires-Dist: pyarrow ; extra == 'examples_tests'
+Requires-Dist: pooch ; extra == 'examples_tests'
+Requires-Dist: numpy (<1.24) ; extra == 'examples_tests'
+Requires-Dist: datashader (>=0.11.1) ; extra == 'examples_tests'
+Requires-Dist: nbval ; extra == 'examples_tests'
+Provides-Extra: extras
+Requires-Dist: ipython (>=5.4.0) ; extra == 'extras'
+Requires-Dist: notebook ; extra == 'extras'
+Requires-Dist: matplotlib (>=3) ; extra == 'extras'
+Requires-Dist: bokeh (>=2.4.3) ; extra == 'extras'
+Requires-Dist: networkx ; extra == 'extras'
+Requires-Dist: pillow ; extra == 'extras'
+Requires-Dist: xarray (>=0.10.4) ; extra == 'extras'
+Requires-Dist: plotly (>=4.0) ; extra == 'extras'
+Requires-Dist: dash (>=1.16) ; extra == 'extras'
+Requires-Dist: streamz (>=0.5.0) ; extra == 'extras'
+Requires-Dist: ffmpeg ; extra == 'extras'
+Requires-Dist: cftime ; extra == 'extras'
+Requires-Dist: netcdf4 ; extra == 'extras'
+Requires-Dist: dask ; extra == 'extras'
+Requires-Dist: scipy ; extra == 'extras'
+Requires-Dist: shapely ; extra == 'extras'
+Requires-Dist: scikit-image ; extra == 'extras'
+Requires-Dist: pyarrow ; extra == 'extras'
+Requires-Dist: pooch ; extra == 'extras'
+Requires-Dist: numpy (<1.24) ; extra == 'extras'
+Requires-Dist: datashader (>=0.11.1) ; extra == 'extras'
+Requires-Dist: pscript (==0.7.1) ; extra == 'extras'
+Provides-Extra: lint
+Requires-Dist: ruff ; extra == 'lint'
+Requires-Dist: pre-commit ; extra == 'lint'
+Provides-Extra: notebook
+Requires-Dist: ipython (>=5.4.0) ; extra == 'notebook'
+Requires-Dist: notebook ; extra == 'notebook'
+Provides-Extra: recommended
+Requires-Dist: ipython (>=5.4.0) ; extra == 'recommended'
+Requires-Dist: notebook ; extra == 'recommended'
+Requires-Dist: matplotlib (>=3) ; extra == 'recommended'
+Requires-Dist: bokeh (>=2.4.3) ; extra == 'recommended'
+Provides-Extra: tests
+Requires-Dist: pytest ; extra == 'tests'
+Requires-Dist: pytest-cov ; extra == 'tests'
+Requires-Dist: pytest-xdist ; extra == 'tests'
+Requires-Dist: flaky ; extra == 'tests'
+Requires-Dist: matplotlib (>=3) ; extra == 'tests'
+Requires-Dist: nbconvert ; extra == 'tests'
+Requires-Dist: bokeh ; extra == 'tests'
+Requires-Dist: pillow ; extra == 'tests'
+Requires-Dist: plotly (>=4.0) ; extra == 'tests'
+Requires-Dist: dash (>=1.16) ; extra == 'tests'
+Requires-Dist: codecov ; extra == 'tests'
+Requires-Dist: ipython (>=5.4.0) ; extra == 'tests'
+Requires-Dist: dask ; extra == 'tests'
+Requires-Dist: ibis-framework ; extra == 'tests'
+Requires-Dist: xarray (>=0.10.4) ; extra == 'tests'
+Requires-Dist: networkx ; extra == 'tests'
+Requires-Dist: shapely ; extra == 'tests'
+Requires-Dist: ffmpeg ; extra == 'tests'
+Requires-Dist: cftime ; extra == 'tests'
+Requires-Dist: scipy ; extra == 'tests'
+Requires-Dist: selenium ; extra == 'tests'
+Requires-Dist: numpy (<1.24) ; extra == 'tests'
+Requires-Dist: spatialpandas ; extra == 'tests'
+Requires-Dist: datashader (>=0.11.1) ; extra == 'tests'
+Provides-Extra: tests_core
+Requires-Dist: pytest ; extra == 'tests_core'
+Requires-Dist: pytest-cov ; extra == 'tests_core'
+Requires-Dist: pytest-xdist ; extra == 'tests_core'
+Requires-Dist: flaky ; extra == 'tests_core'
+Requires-Dist: matplotlib (>=3) ; extra == 'tests_core'
+Requires-Dist: nbconvert ; extra == 'tests_core'
+Requires-Dist: bokeh ; extra == 'tests_core'
+Requires-Dist: pillow ; extra == 'tests_core'
+Requires-Dist: plotly (>=4.0) ; extra == 'tests_core'
+Requires-Dist: dash (>=1.16) ; extra == 'tests_core'
+Requires-Dist: codecov ; extra == 'tests_core'
+Requires-Dist: ipython (>=5.4.0) ; extra == 'tests_core'
+Provides-Extra: tests_gpu
+Requires-Dist: pytest ; extra == 'tests_gpu'
+Requires-Dist: pytest-cov ; extra == 'tests_gpu'
+Requires-Dist: pytest-xdist ; extra == 'tests_gpu'
+Requires-Dist: flaky ; extra == 'tests_gpu'
+Requires-Dist: matplotlib (>=3) ; extra == 'tests_gpu'
+Requires-Dist: nbconvert ; extra == 'tests_gpu'
+Requires-Dist: bokeh ; extra == 'tests_gpu'
+Requires-Dist: pillow ; extra == 'tests_gpu'
+Requires-Dist: plotly (>=4.0) ; extra == 'tests_gpu'
+Requires-Dist: dash (>=1.16) ; extra == 'tests_gpu'
+Requires-Dist: codecov ; extra == 'tests_gpu'
+Requires-Dist: ipython (>=5.4.0) ; extra == 'tests_gpu'
+Requires-Dist: dask ; extra == 'tests_gpu'
+Requires-Dist: ibis-framework ; extra == 'tests_gpu'
+Requires-Dist: xarray (>=0.10.4) ; extra == 'tests_gpu'
+Requires-Dist: networkx ; extra == 'tests_gpu'
+Requires-Dist: shapely ; extra == 'tests_gpu'
+Requires-Dist: ffmpeg ; extra == 'tests_gpu'
+Requires-Dist: cftime ; extra == 'tests_gpu'
+Requires-Dist: scipy ; extra == 'tests_gpu'
+Requires-Dist: selenium ; extra == 'tests_gpu'
+Requires-Dist: numpy (<1.24) ; extra == 'tests_gpu'
+Requires-Dist: spatialpandas ; extra == 'tests_gpu'
+Requires-Dist: datashader (>=0.11.1) ; extra == 'tests_gpu'
+Requires-Dist: cudf ; extra == 'tests_gpu'
+Provides-Extra: tests_nb
+Requires-Dist: nbval ; extra == 'tests_nb'
+Provides-Extra: unit_tests
+Requires-Dist: ipython (>=5.4.0) ; extra == 'unit_tests'
+Requires-Dist: notebook ; extra == 'unit_tests'
+Requires-Dist: matplotlib (>=3) ; extra == 'unit_tests'
+Requires-Dist: bokeh (>=2.4.3) ; extra == 'unit_tests'
+Requires-Dist: networkx ; extra == 'unit_tests'
+Requires-Dist: pillow ; extra == 'unit_tests'
+Requires-Dist: xarray (>=0.10.4) ; extra == 'unit_tests'
+Requires-Dist: plotly (>=4.0) ; extra == 'unit_tests'
+Requires-Dist: dash (>=1.16) ; extra == 'unit_tests'
+Requires-Dist: streamz (>=0.5.0) ; extra == 'unit_tests'
+Requires-Dist: ffmpeg ; extra == 'unit_tests'
+Requires-Dist: cftime ; extra == 'unit_tests'
+Requires-Dist: netcdf4 ; extra == 'unit_tests'
+Requires-Dist: dask ; extra == 'unit_tests'
+Requires-Dist: scipy ; extra == 'unit_tests'
+Requires-Dist: shapely ; extra == 'unit_tests'
+Requires-Dist: scikit-image ; extra == 'unit_tests'
+Requires-Dist: pyarrow ; extra == 'unit_tests'
+Requires-Dist: pooch ; extra == 'unit_tests'
+Requires-Dist: numpy (<1.24) ; extra == 'unit_tests'
+Requires-Dist: datashader (>=0.11.1) ; extra == 'unit_tests'
+Requires-Dist: pytest ; extra == 'unit_tests'
+Requires-Dist: pytest-cov ; extra == 'unit_tests'
+Requires-Dist: pytest-xdist ; extra == 'unit_tests'
+Requires-Dist: flaky ; extra == 'unit_tests'
+Requires-Dist: nbconvert ; extra == 'unit_tests'
+Requires-Dist: bokeh ; extra == 'unit_tests'
+Requires-Dist: codecov ; extra == 'unit_tests'
+Requires-Dist: ibis-framework ; extra == 'unit_tests'
+Requires-Dist: selenium ; extra == 'unit_tests'
+Requires-Dist: spatialpandas ; extra == 'unit_tests'
+Requires-Dist: ruff ; extra == 'unit_tests'
+Requires-Dist: pre-commit ; extra == 'unit_tests'
+
+# <img src="https://assets.holoviews.org/logo/holoviews_color_icon_500x500.png" alt="HoloViews logo" height="40px" align="left" /> HoloViews
+
+**Stop plotting your data - annotate your data and let it visualize
+itself.**
+
+|    |    |
+| --- | --- |
+| Build Status | [![Build Status](https://github.com/holoviz/holoviews/workflows/tests/badge.svg?query=branch:main)](https://github.com/holoviz/holoviews/actions/workflows/test.yaml?query=branch%3Amain) |
+| Coverage | [![codecov](https://codecov.io/gh/holoviz/holoviews/branch/main/graph/badge.svg)](https://codecov.io/gh/holoviz/holoviews) |
+| Latest dev release | [![Github tag](https://img.shields.io/github/tag/holoviz/holoviews.svg?label=tag&colorB=11ccbb)](https://github.com/holoviz/holoviews/tags) [![dev-site](https://img.shields.io/website-up-down-green-red/http/dev.holoviews.org.svg?label=dev%20website)](http://dev.holoviews.org) |
+| Latest release | [![Github release](https://img.shields.io/github/release/holoviz/holoviews.svg?label=tag&colorB=11ccbb)](https://github.com/holoviz/holoviews/releases) [![PyPI version](https://img.shields.io/pypi/v/holoviews.svg?colorB=cc77dd)](https://pypi.python.org/pypi/holoviews) [![holoviews version](https://img.shields.io/conda/v/pyviz/holoviews.svg?colorB=4488ff&style=flat)](https://anaconda.org/pyviz/holoviews) [![conda-forge version](https://img.shields.io/conda/v/conda-forge/holoviews.svg?label=conda%7Cconda-forge&colorB=4488ff)](https://anaconda.org/conda-forge/holoviews) [![defaults version](https://img.shields.io/conda/v/anaconda/holoviews.svg?label=conda%7Cdefaults&style=flat&colorB=4488ff)](https://anaconda.org/anaconda/holoviews) |
+| Python | [![Python support](https://img.shields.io/pypi/pyversions/holoviews.svg)](https://pypi.org/project/holoviews/) |
+| Docs | [![DocBuildStatus](https://github.com/holoviz/holoviews/workflows/docs/badge.svg?query=branch%3Amain)](https://github.com/holoviz/holoviews/actions?query=workflow%3Adocs+branch%3Amain) [![site](https://img.shields.io/website-up-down-green-red/https/holoviews.org.svg)](https://holoviews.org) |
+| Binder | [![Binder](https://img.shields.io/badge/Launch%20JupyterLab-v1.15.4-579ACA.svg?logo=data:image/png;base64,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)](https://mybinder.org/v2/gh/holoviz/holoviews/v1.15.4?urlpath=lab/tree/examples) |
+| Support | [![Discourse](https://img.shields.io/discourse/status?server=https%3A%2F%2Fdiscourse.holoviz.org)](https://discourse.holoviz.org/) |
+
+
+HoloViews is an
+[open-source](https://github.com/holoviz/holoviews/blob/main/LICENSE.txt)
+Python library designed to make data analysis and visualization seamless
+and simple. With HoloViews, you can usually express what you want to do
+in very few lines of code, letting you focus on what you are trying to
+explore and convey, not on the process of plotting.
+
+Check out the [HoloViews web site](http://holoviews.org) for extensive examples and documentation.
+
+<div>
+<div >
+  <a href="http://holoviews.org/gallery/demos/bokeh/iris_splom_example.html">
+    <img src="http://holoviews.org/_images/iris_splom_example_large.png" width='20%'> </img> </a>
+  <a href="http://holoviews.org/getting_started/Gridded_Datasets.html">
+    <img src="https://assets.holoviews.org/collage/cells.png" width='22%'> </img>  </a>
+  <a href="http://holoviews.org/gallery/demos/bokeh/scatter_economic.html">
+    <img src="http://holoviews.org/_images/scatter_economic_large.png" width='43%'> </img> </a>
+</div>
+
+<div >
+  <a href="http://holoviews.org/gallery/demos/bokeh/square_limit.html">
+    <img src="http://holoviews.org/_images/square_limit_large.png" width='20%'> </a>
+  <a href="http://holoviews.org/gallery/demos/bokeh/bars_economic.html">
+    <img src="http://holoviews.org/_images/bars_economic.png" width='20%'> </a>
+  <a href="http://holoviews.org/gallery/demos/bokeh/texas_choropleth_example.html">
+    <img src="http://holoviews.org/_images/texas_choropleth_example_large.png" width='20%'> </a>
+  <a href="http://holoviews.org/gallery/demos/bokeh/verhulst_mandelbrot.html">
+    <img src="http://holoviews.org/_images/verhulst_mandelbrot.png" width='20%'> </a>
+</div>
+<div >
+    <a href="http://holoviews.org/gallery/demos/bokeh/dropdown_economic.html">
+      <img src="https://assets.holoviews.org/collage/dropdown.gif" width='31%'> </a>
+    <a href="http://holoviews.org/gallery/demos/bokeh/dragon_curve.html">
+      <img src="https://assets.holoviews.org/collage/dragon_fractal.gif" width='26%'> </a>
+    <a href="http://holoviews.org/gallery/apps/bokeh/nytaxi_hover.html">
+      <img src="https://assets.holoviews.org/collage/ny_datashader.gif" width='31%'> </a>
+</div>
+</div>
+
+
+Installation
+============
+
+HoloViews works with
+[Python 3](https://github.com/holoviz/holoviews/actions?query=workflow%3Apytest)
+on Linux, Windows, or Mac, and works seamlessly with
+[Jupyter Notebook and JupyterLab](https://jupyter.org).
+
+The recommended way to install HoloViews is using the
+[conda](https://docs.conda.io/projects/conda/en/latest/index.html) command provided by
+[Anaconda](https://docs.anaconda.com/anaconda/install/) or
+[Miniconda](https://docs.conda.io/en/latest/miniconda.html):
+
+    conda install -c pyviz holoviews bokeh
+
+This command will install the typical packages most useful with
+HoloViews, though HoloViews itself depends only on
+[Numpy](https://numpy.org) [Pandas](https://pandas.pydata.org) and [Param](https://param.holoviz.org).
+Additional installation and configuration options are described in the
+[user guide](https://holoviews.org/user_guide/Installing_and_Configuring.html).
+
+You can also clone holoviews directly from GitHub and install it with:
+
+    git clone git://github.com/holoviz/holoviews.git
+    cd holoviews
+    pip install -e .
+
+Usage
+-----
+
+Once you've installed HoloViews, you can get a copy of all the examples shown on this website:
+
+    holoviews --install-examples
+    cd holoviews-examples
+
+Now you can launch Jupyter Notebook or JupyterLab to explore them:
+
+    jupyter notebook
+
+    jupyter lab
+
+If you are working with a JupyterLab version <2.0 you will also need the PyViz JupyterLab
+extension:
+
+    jupyter labextension install @pyviz/jupyterlab_pyviz
+
+For more details on setup and configuration see [our website](https://holoviews.org/user_guide/Installing_and_Configuring.html).
+
+For general discussion, we have a [gitter channel](https://gitter.im/pyviz/pyviz).
+If you find any bugs or have any feature suggestions please file a GitHub
+[issue](https://github.com/holoviz/holoviews/issues)
+or submit a [pull request](https://help.github.com/articles/about-pull-requests).

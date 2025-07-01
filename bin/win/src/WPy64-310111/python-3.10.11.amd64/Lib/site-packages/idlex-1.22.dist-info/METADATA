@@ -1,0 +1,21 @@
+Metadata-Version: 2.1
+Name: idlex
+Version: 1.22
+Summary: IDLE Extensions for Python
+Home-page: http://idlex.sourceforge.net
+Author: Roger D. Serwy
+Author-email: roger.serwy@gmail.com
+License: NCSA License
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Framework :: IDLE
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: University of Illinois/NCSA Open Source License
+Classifier: License :: OSI Approved :: Python Software Foundation License
+Classifier: Topic :: Text Editors :: Integrated Development Environments (IDE)
+Classifier: Operating System :: OS Independent
+
+IdleX is a collection of over 20 extensions for the Python IDLE environment.
+

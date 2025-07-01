@@ -1,0 +1,96 @@
+from unittest.mock import patch
+from flask.testing import FlaskClient
+from flask.wrappers import Response
+
+from app.test.fixtures import client, app  # noqa
+from .model import {{ capitalize(name) }}
+from .schema import {{ capitalize(name) }}Schema
+from .service import {{ capitalize(name) }}Service
+from .interface import {{ capitalize(name) }}Interface
+
+
+def {{ lower(name) }}(id: int = 123, name: str = "Test name") -> {{ capitalize(name) }}:
+    return {{ capitalize(name) }}({{ lower(name) }}_id=id, name="Test name", description="Test description")
+
+
+class Test{{ capitalize(name) }}Resource:
+    @patch.object({{ capitalize(name) }}Service, "get_all", lambda: [{{ lower(name) }}(123), {{ lower(name) }}(456)])
+    def test_get(self, client: FlaskClient):  # noqa
+        with client:
+            results = client.get("/api/{{ lower(name) }}", follow_redirects=True).get_json()
+            expected = {{ capitalize(name) }}Schema(many=True).dump([{{ lower(name) }}(456), {{ lower(name) }}(123)]).data
+            for r in results:
+                assert r in expected
+
+
+class Test{{ capitalize(name) }}{{ capitalize(name) }}Resource:
+    @patch.object(
+        {{ capitalize(name) }}Service,
+        "get_all",
+        lambda: [{{ lower(name) }}(123, name="Test name 1"), {{ lower(name) }}(456, name="Test name 2")],
+    )
+    def test_get(self, client: FlaskClient):  # noqa
+        with client:
+            results: dict = client.get("/api/{{ lower(name) }}", follow_redirects=True).get_json()
+            expected = (
+                {{ capitalize(name) }}Schema(many=True)
+                .dump([{{ lower(name) }}(123, name="Test name 1"), {{ lower(name) }}(456, name="Test name 2")])
+                .data
+            )
+            for r in results:
+                assert r in expected
+
+    @patch.object(
+        {{ capitalize(name) }}Service,
+        "create",
+        lambda create_request: {{ capitalize(name) }}(
+            {{ lower(name) }}_id=create_request["{{ lower(name) }}_id"],
+            name=create_request["name"],
+            description=create_request["description"],
+        ),
+    )
+    def test_post(self, client: FlaskClient):  # noqa
+        with client:
+
+            payload = dict(name="Test name", description="Test description")
+            result: dict = client.post("/api/{{ lower(name) }}/", json=payload).get_json()
+            expected = (
+                {{ capitalize(name) }}Schema()
+                .dump({{ capitalize(name) }}(name=payload["name"], description=payload["description"]))
+                .data
+            )
+            assert result == expected
+
+
+def fake_update({{ lower(name) }}: {{ capitalize(name) }}, changes: {{ capitalize(name) }}Interface) -> {{ capitalize(name) }}:
+    # To fake an update, just return a new object
+    updated_{{ lower(name) }} = {{ capitalize(name) }}({{ lower(name) }}_id={{ lower(name) }}.{{ lower(name) }}_id, name=changes["name"])
+    return updated_{{ lower(name) }}
+
+
+class Test{{ capitalize(name) }}{{ capitalize(name) }}IdResource:
+    @patch.object({{ capitalize(name) }}Service, "get_by_id", lambda id: {{ capitalize(name) }}({{ lower(name) }}_id=id))
+    def test_get(self, client: FlaskClient):  # noqa
+        with client:
+            result: dict = client.get("/api/{{ lower(name) }}/123").get_json()
+            expected = {{ capitalize(name) }}({{ lower(name) }}_id=123)
+            assert result["{{ lower(name) }}Id"] == expected.{{ lower(name) }}_id
+
+    @patch.object({{ capitalize(name) }}Service, "delete_by_id", lambda id: [id])
+    def test_delete(self, client: FlaskClient):  # noqa
+        with client:
+            result: dict = client.delete("/api/{{ lower(name) }}/123").get_json()
+            expected = dict(status="Success", id=[123])
+            assert result == expected
+
+    @patch.object({{ capitalize(name) }}Service, "get_by_id", lambda id: {{ capitalize(name) }}({{ lower(name) }}_id=id))
+    @patch.object({{ capitalize(name) }}Service, "update", fake_update)
+    def test_put(self, client: FlaskClient):  # noqa
+        with client:
+            result: dict = client.put(
+                "/api/{{ lower(name) }}/123", json={"name": "New name"}
+            ).get_json()
+            expected: dict = {{ capitalize(name) }}Schema().dump(
+                {{ capitalize(name) }}({{ lower(name) }}_id=123, name="New name")
+            ).data
+            assert result == expected

@@ -1,0 +1,13 @@
+Metadata-Version: 2.1
+Name: scilab2py
+Version: 0.6.2
+Summary: Python to Scilab bridge
+Home-page: http://github.com/blink1073/scilab2py
+Maintainer: Steven Silvester
+Maintainer-email: steven.silvester@ieee.org
+License: MIT
+Download-URL: http://github.com/blink1073/scilab2py
+
+Scilab2Py: Python to Scilab Bridge
+
+

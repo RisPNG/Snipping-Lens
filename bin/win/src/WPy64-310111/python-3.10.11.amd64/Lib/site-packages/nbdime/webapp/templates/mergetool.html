@@ -1,0 +1,20 @@
+{% extends "nbdimepage.html" %}
+
+    {% block nbdimeheader %}
+
+    <div id="nbdime-header" class="nbdime-Merge">
+      <h3>Notebook Merge</h3>
+      <div id="nbdime-header-buttonrow">
+        <input id="nbdime-hide-unchanged" type="checkbox"><label for="cbox1">Hide unchanged cells</label></input>
+        <button id="nbdime-save" style="display: none">Save</button>
+        <button id="nbdime-download" style="display: none">Download</button>
+        <button id="nbdime-close" style="display: none">Close tool</button>
+      </div>
+      <div id=nbdime-header-banner>
+        <span id="nbdime-header-local">Local</span>
+        <span id="nbdime-header-base">Base</span>
+        <span id="nbdime-header-remote">Remote</span>
+      </div>
+    </div> <!-- ndime-header -->
+
+    {% endblock %}

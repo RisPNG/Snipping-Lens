@@ -1,0 +1,81 @@
+name: name_in_cat
+metadata:
+  test: true
+plugins:
+  source:
+    - module: intake.catalog.tests.example1_source
+    - module: intake.catalog.tests.example_plugin_dir.example2_source
+sources:
+  use_example1:
+    description: example1 source plugin
+    driver: example1
+    args: {}
+  nested:
+    description: around again
+    driver: yaml_file_cat
+    args:
+      path: '{{ CATALOG_DIR }}/catalog1.yml'
+  entry1:
+    description: entry1 full
+    metadata:
+      foo: 'bar'
+      bar: [1, 2, 3]
+    driver: csv
+    # Default direct_access is "forbid" by default
+    args: # passed to the open() method
+      urlpath: '{{ CATALOG_DIR }}/entry1_*.csv'
+  entry1_part:
+    description: entry1 part
+    parameters: # User defined parameters
+      part:
+        description: part of filename
+        type: str
+        default: "1"
+        allowed: ["1", "2"]
+    metadata:
+      foo: 'baz'
+      bar: [2, 4, 6]
+    driver: csv
+    direct_access: "allow"
+    args: # passed to the open() method
+      urlpath: '{{ CATALOG_DIR }}/entry1_{{ part }}.csv'
+  remote_env:
+    description: env gets interpreted in server
+    driver: intake.conftest.TestSource
+    args:
+      urlpath: 'path-{{intake_test}}'
+    parameters:
+      intake_test:
+        description: none
+        type: str
+        default: 'env(INTAKE_TEST)'
+  local_env:
+    description: env gets interpreted in client
+    driver: csv
+    args:
+      urlpath: 'path-{{intake_test}}'
+    parameters:
+      intake_test:
+        description: none
+        type: str
+        default: 'client_env(INTAKE_TEST)'
+  text:
+    description: textfiles in this dir
+    driver: textfiles
+    args:
+      urlpath: "{{ CATALOG_DIR }}/*.yml"
+  arr:
+    description: small array
+    driver: numpy
+    args:
+      path: "{{ CATALOG_DIR }}/small.npy"
+      chunks: 5
+  datetime:
+    description: datetime parameters
+    driver: intake.conftest.TestSource
+    args:
+      urlpath: "{{time}}"
+    parameters:
+      time:
+        description: some time
+        type: datetime

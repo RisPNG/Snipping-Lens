@@ -1,0 +1,82 @@
+Metadata-Version: 2.1
+Name: wasmer_compiler_singlepass
+Version: 1.1.0
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Rust
+Classifier: Topic :: Software Development
+Classifier: Topic :: Software Development :: Compilers
+Classifier: Topic :: Software Development :: Interpreters
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Summary: Python extension to run WebAssembly binaries
+Keywords: python,extension,webassembly
+Author: Wasmer Engineering Team <engineering@wasmer.io>
+Author-email: Wasmer Engineering Team <engineering@wasmer.io>
+Description-Content-Type: text/markdown; charset=UTF-8; variant=GFM
+Project-URL: Bug Tracker, https://github.com/wasmerio/wasmer-python/issues
+Project-URL: Documentation, https://github.com/wasmerio/wasmer-python/
+Project-URL: Source Code, https://github.com/wasmerio/wasmer-python
+
+# <img height="48" src="https://raw.githubusercontent.com/wasmerio/wasmer/master/assets/logo.png" alt="Wasmer logo" valign="middle"> Wasmer Python, the Singlepass compiler [![PyPI version](https://img.shields.io/pypi/v/wasmer_compiler_singlepass)](https://pypi.org/project/wasmer_compiler_singlepass/) [![Wasmer Python Documentation](https://img.shields.io/badge/docs-read-green)](https://wasmerio.github.io/wasmer-python/api/wasmer_compiler_singlepass/) [![Wasmer PyPI downloads](https://pepy.tech/badge/wasmer_compiler_singlepass)](https://pypi.org/project/wasmer_compiler_singlepass/) [![Wasmer Slack Channel](https://img.shields.io/static/v1?label=chat&message=on%20Slack&color=green)](https://slack.wasmer.io)
+
+`wasmer` is a complete and mature WebAssembly runtime for
+Python. `wasmer_compiler_singlepass` provides the Singlepass compiler
+to `wasmer`, so that `wasmer` is able to compile WebAssembly module.
+
+Other compilers exist:
+
+* `wasmer_compiler_cranelift`,
+* `wasmer_compiler_llvm`.
+
+To get a more complete view, please see the documentation of [the
+`wasmer` package itself](https://github.com/wasmerio/wasmer-python).
+
+# Install
+
+This package must be used with the `wasmer` package, thus:
+
+```sh
+$ pip install wasmer
+$ pip install wasmer_compiler_singlepass
+```
+
+# Usage
+
+Any engines in `wasmer.engine` can take the
+`wasmer_compiler_singlepass.Compiler` class as argument:
+
+```py
+from wasmer import engine, Store, Module, Instance
+from wasmer_compiler_singlepass import Compiler
+
+# Let's use the Singlepass compiler with the JIT engine…
+store = Store(engine.JIT(Compiler))
+
+# … or with the native engine!
+store = Store(engine.Native(Compiler))
+
+# And now, compile the module.
+module = Module(store, open('my_program.wasm', 'rb').read())
+
+# Now it's compiled, let's instantiate it.
+instance = Instance(module)
+
+# And get fun, for example by calling the `sum` exported function!
+print(instance.exports.sum(1, 2))
+```
+
+# Documentation
+
+Browse the documentation at
+https://wasmerio.github.io/wasmer-python/api/wasmer_compiler_singlepass/.
+
+Alternatively, run `just build compiler-singlepass` followed by `just
+doc` to generate the documentation inside
+`docs/api/wasmer_compiler_singlepass.html`.
+

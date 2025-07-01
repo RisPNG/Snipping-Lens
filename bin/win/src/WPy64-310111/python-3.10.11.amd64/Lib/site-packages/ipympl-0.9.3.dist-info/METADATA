@@ -1,0 +1,37 @@
+Metadata-Version: 2.1
+Name: ipympl
+Version: 0.9.3
+Summary: Matplotlib Jupyter Extension
+Home-page: http://matplotlib.org
+Author: Matplotlib Development Team
+Author-email: matplotlib-users@python.org
+License: BSD License
+Keywords: ipython,jupyter,widgets,graphics
+Classifier: Development Status :: 4 - Beta
+Classifier: Framework :: IPython
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Multimedia :: Graphics
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+License-File: LICENSE
+Requires-Dist: ipython (<9)
+Requires-Dist: numpy
+Requires-Dist: ipython-genutils
+Requires-Dist: pillow
+Requires-Dist: traitlets (<6)
+Requires-Dist: ipywidgets (<9,>=7.6.0)
+Requires-Dist: matplotlib (<4,>=3.4.0)
+Provides-Extra: docs
+Requires-Dist: myst-nb ; extra == 'docs'
+Requires-Dist: Sphinx (>=1.5) ; extra == 'docs'
+Requires-Dist: sphinx-copybutton ; extra == 'docs'
+Requires-Dist: sphinx-thebe ; extra == 'docs'
+Requires-Dist: sphinx-togglebutton ; extra == 'docs'
+Requires-Dist: sphinx-book-theme ; extra == 'docs'
+
+Matplotlib Jupyter Extension

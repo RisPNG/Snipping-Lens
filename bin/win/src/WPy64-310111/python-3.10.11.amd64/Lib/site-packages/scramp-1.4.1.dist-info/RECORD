@@ -1,0 +1,14 @@
+scramp-1.4.1.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+scramp-1.4.1.dist-info/LICENSE,sha256=LyRoxNsFgtFasyoe_vaY2SvVknsq_-E-7bR6MJfduX4,1067
+scramp-1.4.1.dist-info/METADATA,sha256=iA5I7p4ojhPXz8l2uxMxPSRF72tvYozvsnXCTvEpX04,1191
+scramp-1.4.1.dist-info/RECORD,,
+scramp-1.4.1.dist-info/WHEEL,sha256=ewwEueio1C2XeHTvT17n8dZUJgOvyCWCt0WVNLClP9o,92
+scramp-1.4.1.dist-info/top_level.txt,sha256=bh9h6NCaW-lttBswAA6K5KzHm0P_UnzXFvbNZ4rwHKw,7
+scramp/__init__.py,sha256=WwiTzheoUoe1FBmXcQXcaBVTxos9J5nXYTouO3ZuWZg,284
+scramp/__pycache__/__init__.cpython-310.pyc,,
+scramp/__pycache__/_version.cpython-310.pyc,,
+scramp/__pycache__/core.cpython-310.pyc,,
+scramp/__pycache__/utils.cpython-310.pyc,,
+scramp/_version.py,sha256=_b3Ox06XAubjKjHOCFpw51fKEjIpbX95ja42NRnMi5c,497
+scramp/core.py,sha256=SsysTmmkBgWLzoIeFG2hptr8bA3ie0t7qiL6z7eLMo8,21155
+scramp/utils.py,sha256=YH4Yvz03gk89j8zgNllINLkbyyl1ESj70kMKsL_giWI,655

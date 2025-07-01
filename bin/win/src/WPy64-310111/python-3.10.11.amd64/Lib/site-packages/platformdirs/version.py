@@ -1,0 +1,4 @@
+"""Version information"""
+
+__version__ = "2.5.4"
+__version_info__ = (2, 5, 4)

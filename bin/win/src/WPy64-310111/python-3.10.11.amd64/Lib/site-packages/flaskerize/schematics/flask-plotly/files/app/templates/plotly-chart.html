@@ -1,0 +1,25 @@
+{% extends "base.html" %} {% block content %}
+
+<div class="container-fluid">
+  <h1>A Flaskerific Plotly App!</h1>
+  <p>
+    This project was generated with
+    <a href="https://github.com/apryor6/flaskerize">Flaskerize</a>
+  </p>
+  <p>
+    Checkout more examples of Plotly
+    <a href="https://plot.ly/python/basic-charts/">here</a>
+  </p>
+  <div class="row justify-content-center">
+    <div id="graphs" class="chart"></div>
+  </div>
+
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script type="text/javascript">
+
+    var graphs = {{ fig|safe }};
+    var layout ={{ layout|safe }}
+    Plotly.plot('graphs', graphs,layout=layout,{ responsive: true });
+  </script>
+  {% endblock %}
+</div>

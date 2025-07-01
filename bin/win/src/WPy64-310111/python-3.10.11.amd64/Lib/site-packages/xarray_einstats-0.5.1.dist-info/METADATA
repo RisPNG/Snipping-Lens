@@ -1,0 +1,132 @@
+Metadata-Version: 2.1
+Name: xarray-einstats
+Version: 0.5.1
+Summary: Stats, linear algebra and einops for xarray
+Author-email: ArviZ team <arviz.devs@gmail.com>
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Education
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Dist: numpy>=1.20
+Requires-Dist: scipy>=1.6
+Requires-Dist: xarray>=2022.09.0
+Requires-Dist: furo ; extra == "doc"
+Requires-Dist: myst-parser[linkify] ; extra == "doc"
+Requires-Dist: myst-nb ; extra == "doc"
+Requires-Dist: sphinx-copybutton ; extra == "doc"
+Requires-Dist: numpydoc ; extra == "doc"
+Requires-Dist: sphinx>=4 ; extra == "doc"
+Requires-Dist: jupyter-sphinx ; extra == "doc"
+Requires-Dist: sphinx-design ; extra == "doc"
+Requires-Dist: watermark ; extra == "doc"
+Requires-Dist: matplotlib ; extra == "doc"
+Requires-Dist: einops ; extra == "einops"
+Requires-Dist: numba>=0.55 ; extra == "numba"
+Requires-Dist: hypothesis ; extra == "test"
+Requires-Dist: pytest ; extra == "test"
+Requires-Dist: pytest-cov ; extra == "test"
+Requires-Dist: packaging ; extra == "test"
+Project-URL: documentation, https://xarray-einstats.readthedocs.io
+Project-URL: funding, https://opencollective.com/arviz
+Project-URL: source, https://github.com/arviz-devs/xarray-einstats
+Project-URL: tracker, https://github.com/arviz-devs/xarray-einstats/issues
+Provides-Extra: doc
+Provides-Extra: einops
+Provides-Extra: numba
+Provides-Extra: test
+
+# xarray-einstats
+
+[![Documentation Status](https://readthedocs.org/projects/xarray-einstats/badge/?version=latest)](https://xarray-einstats.readthedocs.io/en/latest/?badge=latest)
+[![Run tests](https://github.com/arviz-devs/xarray-einstats/actions/workflows/test.yml/badge.svg)](https://github.com/arviz-devs/xarray-einstats/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/arviz-devs/xarray-einstats/branch/main/graph/badge.svg?token=78K2ZOJCVN)](https://codecov.io/gh/arviz-devs/xarray-einstats)
+[![PyPI](https://img.shields.io/pypi/v/xarray-einstats)](https://pypi.org/project/xarray-einstats)
+[![Conda Version](https://img.shields.io/conda/vn/conda-forge/xarray-einstats.svg)](https://anaconda.org/conda-forge/xarray-einstats)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5895451.svg)](https://doi.org/10.5281/zenodo.5895451)
+
+
+Stats, linear algebra and einops for xarray
+
+## Installation
+
+To install, run
+
+```
+(.venv) $ pip install xarray-einstats
+```
+
+See the docs for more [extensive install instructions](https://einstats.python.arviz.org/en/latest/installation.html).
+
+## Overview
+As stated in their website:
+
+> xarray makes working with multi-dimensional labeled arrays simple, efficient and fun!
+
+The code is often more verbose, but it is generally because it is clearer and thus less error prone
+and more intuitive.
+Here are some examples of such trade-off where we believe the increased clarity is worth
+the extra characters:
+
+
+|  numpy  |  xarray  |
+|---------|----------|
+| `a[2, 5]` | `da.sel(drug="paracetamol", subject=5)` |
+| `a.mean(axis=(0, 1))` | `da.mean(dim=("chain", "draw"))` |
+| `a.reshape((-1, 10))`  | `da.stack(sample=("chain", "draw"))` |
+| `a.transpose(2, 0, 1)` | `da.transpose("drug", "chain", "draw")` |
+
+In some other cases however, using xarray can result in overly verbose code
+that often also becomes less clear. `xarray_einstats` provides wrappers
+around some numpy and scipy functions (mostly `numpy.linalg` and `scipy.stats`)
+and around [einops](https://einops.rocks/) with an api and features adapted to xarray.
+Continue at the [getting started page](https://einstats.python.arviz.org/en/latest/getting_started.html).
+
+## Contributing
+xarray-einstats is in active development and all types of contributions are welcome!
+See the [contributing guide](https://einstats.python.arviz.org/en/latest/contributing/overview.html) for details on how to contribute.
+
+## Relevant links
+* Documentation: https://einstats.python.arviz.org/en/latest/
+* Contributing guide: https://einstats.python.arviz.org/en/latest/contributing/overview.html
+* ArviZ project website: https://www.arviz.org
+
+## Similar projects
+Here we list some similar projects we know of. Note that all of
+them are complementary and don't overlap:
+* [xr-scipy](https://xr-scipy.readthedocs.io/en/latest/index.html)
+* [xarray-extras](https://xarray-extras.readthedocs.io/en/latest/)
+* [xhistogram](https://xhistogram.readthedocs.io/en/latest/)
+* [xrft](https://xrft.readthedocs.io/en/latest/)
+
+## Cite xarray-einstats
+If you use this software, please cite it using the following template and the version
+specific DOI provided by Zenodo. Click on the badge to go to the Zenodo page
+and select the DOI corresponding to the version you used
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5895451.svg)](https://doi.org/10.5281/zenodo.5895451)
+
+* Oriol Abril-Pla. (2022). arviz-devs/xarray-einstats `<version>`. Zenodo. `<version_doi>`
+
+or in bibtex format:
+
+```none
+@software{xarray_einstats2022,
+  author       = {Abril-Pla, Oriol},
+  title        = {{xarray-einstats}},
+  year         = 2022,
+  url          = {https://github.com/arviz-devs/xarray-einstats}
+  publisher    = {Zenodo},
+  version      = {<version>},
+  doi          = {<version_doi>},
+}
+```
+

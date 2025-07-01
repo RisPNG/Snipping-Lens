@@ -1,0 +1,2 @@
+Version: 1.3.5
+Arguments: ['C:\\Miniconda\\envs\\test\\Scripts\\delvewheel', 'repair', 'dist/scs-3.2.3-cp310-cp310-win_amd64.whl']

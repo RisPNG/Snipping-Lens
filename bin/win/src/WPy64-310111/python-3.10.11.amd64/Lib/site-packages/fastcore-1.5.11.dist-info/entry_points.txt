@@ -1,0 +1,2 @@
+[nbdev]
+fastcore = fastcore._modidx:d

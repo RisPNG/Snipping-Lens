@@ -1,0 +1,3 @@
+[console_scripts]
+parambokeh = parambokeh.__main__:main
+

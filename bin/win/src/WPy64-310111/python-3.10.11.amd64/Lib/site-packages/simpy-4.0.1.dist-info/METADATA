@@ -1,0 +1,377 @@
+Metadata-Version: 2.1
+Name: simpy
+Version: 4.0.1
+Summary: Event discrete, process based simulation for Python.
+Home-page: https://simpy.readthedocs.io
+Author: Ontje Lünsdorf, Stefan Scherfke
+Author-email: the_com@gmx.de, stefan@sofa-rockers.org
+License: MIT License
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Natural Language :: English
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: Topic :: Scientific/Engineering
+Requires-Python: >=3.6
+Description-Content-Type: text/x-rst
+
+SimPy
+=====
+
+SimPy is a process-based discrete-event simulation framework based on standard
+Python. Processes in SimPy are defined by Python `generator`__ functions and
+can, for example, be used to model active components like customers, vehicles or
+agents.  SimPy also provides various types of shared resources to model
+limited capacity congestion points (like servers, checkout counters and
+tunnels).
+
+Simulations can be performed “as fast as possible”, in real time (wall clock
+time) or by manually stepping through the events.
+
+Though it is theoretically possible to do continuous simulations with SimPy, it
+has no features that help you with that. Also, SimPy is not really required for
+simulations with a fixed step size and where your processes don’t interact with
+each other or with shared resources.
+
+The `documentation`__ contains a `tutorial`__, `several guides`__ explaining key
+concepts, a number of `examples`__ and the `API reference`__.
+
+SimPy is released under the MIT License. Simulation model developers are
+encouraged to share their SimPy modeling techniques with the SimPy community.
+Please post a message to the `SimPy mailing list`__.
+
+There is an introductory talk that explains SimPy’s concepts and provides some
+examples: `watch the video`__ or `get the slides`__.
+
+__ http://docs.python.org/3/glossary.html#term-generator
+__ https://simpy.readthedocs.io/en/latest/
+__ https://simpy.readthedocs.io/en/latest/simpy_intro/index.html
+__ https://simpy.readthedocs.io/en/latest/topical_guides/index.html
+__ https://simpy.readthedocs.io/en/latest/examples/index.html
+__ https://simpy.readthedocs.io/en/latest/api_reference/index.html
+__ https://groups.google.com/forum/#!forum/python-simpy
+__ https://www.youtube.com/watch?v=Bk91DoAEcjY
+__ http://stefan.sofa-rockers.org/downloads/simpy-ep14.pdf
+
+
+A Simple Example
+----------------
+
+One of SimPy's main goals is to be easy to use. Here is an example for a simple
+SimPy simulation: a *clock* process that prints the current simulation time at
+each step:
+
+.. code-block:: python
+
+    >>> import simpy
+    >>>
+    >>> def clock(env, name, tick):
+    ...     while True:
+    ...         print(name, env.now)
+    ...         yield env.timeout(tick)
+    ...
+    >>> env = simpy.Environment()
+    >>> env.process(clock(env, 'fast', 0.5))
+    <Process(clock) object at 0x...>
+    >>> env.process(clock(env, 'slow', 1))
+    <Process(clock) object at 0x...>
+    >>> env.run(until=2)
+    fast 0
+    slow 0
+    fast 0.5
+    slow 1
+    fast 1.0
+    fast 1.5
+
+
+Installation
+------------
+
+SimPy requires Python >= 3.6, both CPython and PyPy3 are known to work.
+
+You can install SimPy easily via `pip <http://pypi.python.org/pypi/pip>`_:
+
+.. code-block:: bash
+
+    $ pip install -U simpy
+
+You can also download and install SimPy manually:
+
+.. code-block:: bash
+
+    $ cd where/you/put/simpy/
+    $ python setup.py install
+
+To run SimPy’s test suite on your installation, execute:
+
+.. code-block:: bash
+
+    $ py.test --pyargs simpy
+
+
+Getting started
+---------------
+
+If you’ve never used SimPy before, the `SimPy tutorial`__ is a good starting
+point for you. You can also try out some of the `Examples`__ shipped with
+SimPy.
+
+__ https://simpy.readthedocs.io/en/latest/simpy_intro/index.html
+__ https://simpy.readthedocs.io/en/latest/examples/index.html
+
+
+Documentation and Help
+----------------------
+
+You can find `a tutorial`__, `examples`__, `topical guides`__ and an `API
+reference`__, as well as some information about `SimPy and its history`__ in
+our `online documentation`__. For more help, contact the `SimPy mailing
+list`__. SimPy users are pretty helpful. You can, of course, also dig through
+the `source code`__.
+
+If you find any bugs, please post them on our `issue tracker`__.
+
+__ https://simpy.readthedocs.io/en/latest/simpy_intro/index.html
+__ https://simpy.readthedocs.io/en/latest/examples/index.html
+__ https://simpy.readthedocs.io/en/latest/topical_guides/index.html
+__ https://simpy.readthedocs.io/en/latest/api_reference/index.html
+__ https://simpy.readthedocs.io/en/latest/about/index.html
+__ https://simpy.readthedocs.io/
+__ mailto:python-simpy@googlegroups.com
+__ https://gitlab.com/team-simpy/simpy/-/tree/master
+__ https://gitlab.com/team-simpy/simpy/-/issues
+
+Enjoy simulation programming in SimPy!
+
+
+Ports and comparable libraries
+------------------------------
+
+Reimplementations of SimPy and libraries similar to SimPy are available in the
+following languages:
+
+- C#: `SimSharp <https://github.com/abeham/SimSharp>`_ (written by Andreas Beham)
+- Julia: `SimJulia <https://github.com/BenLauwens/SimJulia.jl>`_
+- R: `Simmer <https://github.com/r-simmer/simmer>`_
+
+Changelog for SimPy
+===================
+
+4.0.0 - 2020-04-06
+------------------
+
+- [BREAKING] Python 3.6 is the minimum supported version
+- [BREAKING] ``BaseEnvironment`` is eliminated. Inherit ``Environment`` instead.
+- [BREAKING] ``Environment.exit()`` is eliminated. Use ``return`` instead.
+- [NEW] "Porting from SimPy 3 to 4" topical guide in docs
+- [NEW] SimPy is now fully type annotated (PEP-483, PEP-484)
+- [NEW] PEP-517/PEP-518 compatible build system
+
+
+3.0.13 - 2020-04-05
+-------------------
+
+- [FIX] Repair several minor typos in documentation
+- [FIX] Possible AttributeError in Process._resume()
+- [CHANGE] Use setuptools_scm in distribution build
+
+
+3.0.12 - 2020-03-12
+-------------------
+
+- [FIX] Fix URLs for GitLab.com and re-release
+
+
+3.0.11 - 2018-07-13
+-------------------
+
+- [FIX] Repair Environment.exit() to support PEP-479 and Python 3.7.
+- [FIX] Fix wrong usage_since calculation in preemptions
+- [NEW] Add "Time and Scheduling" section to docs
+- [CHANGE] Move Interrupt from events to exceptions
+- [FIX] Various minor documentation improvements
+
+3.0.10 – 2016-08-26
+-------------------
+
+- [FIX] Conditions no longer leak callbacks on events (thanks to Peter Grayson).
+
+3.0.9 – 2016-06-12
+------------------
+
+- [NEW] PriorityStore resource and performance benchmarks were implemented by
+  Peter Grayson.
+- [FIX] Support for identifying nested preemptions was added by Cristian Klein.
+
+3.0.8 – 2015-06-23
+------------------
+
+- [NEW] Added a monitoring guide to the documentation.
+- [FIX] Improved packaging (thanks to Larissa Reis).
+- [FIX] Fixed and improved various test cases.
+
+
+3.0.7 – 2015-03-01
+------------------
+
+- [FIX] State of resources and requests were inconsistent before the request
+  has been processed (`issue #62 <https://bitbucket.org/simpy/simpy/issue/
+  62>`__).
+- [FIX] Empty conditions were never triggered (regression in 3.0.6, `issue #63
+  <https://bitbucket.org/simpy/simpy/issue/63>`__).
+- [FIX] ``Environment.run()`` will fail if the until event does not get
+  triggered (`issue #64 <https://bitbucket.org/simpy/simpy/issue/64>`__).
+- [FIX] Callback modification during event processing is now prohibited (thanks
+  to Andreas Beham).
+
+
+3.0.6 - 2015-01-30
+------------------
+
+- [NEW] Guide to SimPy resources.
+- [CHANGE] Improve performance of condition events.
+- [CHANGE] Improve performance of filter store (thanks to Christoph Körner).
+- [CHANGE] Exception tracebacks are now more compact.
+- [FIX] ``AllOf`` conditions handle already processed events correctly (`issue
+  #52 <https://bitbucket.org/simpy/simpy/issue/52>`__).
+- [FIX] Add ``sync()`` to ``RealtimeEnvironment`` to reset its internal
+  wall-clock reference time (`issue #42 <https://bitbucket.org/simpy/simpy/
+  issue/42>`__).
+- [FIX] Only send copies of exceptions into processes to prevent traceback
+  modifications.
+- [FIX] Documentation improvements.
+
+
+3.0.5 – 2014-05-14
+------------------
+
+- [CHANGE] Move interruption and all of the safety checks into a new event
+  (`pull request #30`__)
+- [FIX] ``FilterStore.get()`` now behaves correctly (`issue #49`__).
+- [FIX] Documentation improvements.
+
+__ https://bitbucket.org/simpy/simpy/pull-request/30
+__ https://bitbucket.org/simpy/simpy/issue/49
+
+
+3.0.4 – 2014-04-07
+------------------
+
+- [NEW] Verified, that SimPy works on Python 3.4.
+- [NEW] Guide to SimPy events
+- [CHANGE] The result dictionary for condition events (``AllOF`` / ``&`` and
+  ``AnyOf`` / ``|``) now is an *OrderedDict* sorted in the same way as the
+  original events list.
+- [CHANGE] Condition events now also except processed events.
+- [FIX] ``Resource.request()`` directly after ``Resource.release()`` no longer
+  successful. The process now has to wait as supposed to.
+- [FIX] ``Event.fail()`` now accept all exceptions derived from
+  ``BaseException`` instead of only ``Exception``.
+
+
+3.0.3 – 2014-03-06
+------------------
+
+- [NEW] Guide to SimPy basics.
+- [NEW] Guide to SimPy Environments.
+- [FIX] Timing problems with real time simulation on Windows (issue #46).
+- [FIX] Installation problems on Windows due to Unicode errors (issue #41).
+- [FIX] Minor documentation issues.
+
+
+3.0.2 – 2013-10-24
+------------------
+
+- [FIX] The default capacity for ``Container`` and ``FilterStore`` is now also
+  ``inf``.
+
+
+3.0.1 – 2013-10-24
+------------------
+
+- [FIX] Documentation and default parameters of ``Store`` didn't match. Its
+  default capacity is now ``inf``.
+
+
+3.0 – 2013-10-11
+----------------
+
+SimPy 3 has been completely rewritten from scratch. Our main goals were to
+simplify the API and code base as well as making SimPy more flexible and
+extensible. Some of the most important changes are:
+
+- Stronger focus on events. Processes yield event instances and are suspended
+  until the event is triggered. An example for an event is a *timeout*
+  (formerly known as *hold*), but even processes are now events, too (you can
+  wait until a process terminates).
+
+- Events can be combined with ``&`` (and) and ``|`` (or) to create
+  *condition events*.
+
+- Process can now be defined by any generator function. You don't have to
+  subclass ``Process`` anymore.
+
+- No more global simulation state. Every simulation stores its state in an
+  *environment* which is comparable to the old ``Simulation`` class.
+
+- Improved resource system with newly added resource types.
+
+- Removed plotting and GUI capabilities. `Pyside`__ and `matplotlib`__ are much
+  better with this.
+
+- Greatly improved test suite. Its cleaner, and the tests are shorter and more
+  numerous.
+
+- Completely overhauled documentation.
+
+There is a `guide for porting from SimPy 2 to SimPy 3`__. If you want to stick
+to SimPy 2 for a while, change your requirements to ``'SimPy>=2.3,<3'``.
+
+All in all, SimPy has become a framework for asynchronous programming based on
+coroutines. It brings more than ten years of experience and scientific know-how
+in the field of event-discrete simulation to the world of asynchronous
+programming and should thus be a solid foundation for everything based on an
+event loop.
+
+You can find information about older versions on the `history page`__
+
+__ http://qt-project.org/wiki/PySide
+__ http://matplotlib.org/
+__ https://simpy.readthedocs.io/en/latest/topical_guides/porting_from_simpy2.html
+__ https://simpy.readthedocs.io/en/latest/about/history.html
+
+Authors
+=======
+
+SimPy was originally created by Klaus G. Müller and Tony Vignaux in 2002.
+
+In 2008, Ontje Lünsdorf and Stefan Scherfke started to contribute to SimPy and
+became active maintainers in 2011.
+
+In 2011, Karen Turner came on board to generally help with all the bits and
+pieces that may get forgotten :-)
+
+We’d also like to thank:
+
+- Johannes Koomer
+- Steven Kennedy
+- Matthew Grogan
+- Sean Reed
+- Christoph Körner
+- Andreas Beham
+- Larissa Reis
+- Peter Grayson
+- Cristian Klein
+
+

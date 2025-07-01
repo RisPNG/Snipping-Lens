@@ -1,0 +1,6 @@
+# Automatically generated configuration for PyQt5.QtWebEngineWidgets.
+
+sip-version = "6.3.1"
+sip-abi-version = "12.8"
+module-tags = ["QtWebEngine_5_15_0", "Qt_5_15_0", "WS_WIN"]
+module-disabled-features = []

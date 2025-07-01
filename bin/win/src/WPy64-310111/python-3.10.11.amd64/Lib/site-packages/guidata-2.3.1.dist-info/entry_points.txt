@@ -1,0 +1,2 @@
+[gui_scripts]
+guidata-tests = guidata.tests:run

@@ -1,0 +1,70 @@
+Metadata-Version: 2.1
+Name: spatialpandas
+Version: 0.4.7
+Summary: Pandas extension arrays for spatial/geometric operations
+Home-page: https://github.com/holoviz/spatialpandas
+Maintainer: HoloViz developers
+Maintainer-email: developers@holoviz.org
+License: BSD-2-Clause
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Software Development :: Libraries
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: dask
+Requires-Dist: fsspec
+Requires-Dist: numba
+Requires-Dist: pandas
+Requires-Dist: param
+Requires-Dist: pyarrow (>=1.0)
+Requires-Dist: python-snappy
+Requires-Dist: retrying
+Provides-Extra: examples
+Requires-Dist: datashader ; extra == 'examples'
+Requires-Dist: descartes ; extra == 'examples'
+Requires-Dist: geopandas ; extra == 'examples'
+Requires-Dist: holoviews ; extra == 'examples'
+Requires-Dist: matplotlib ; extra == 'examples'
+Provides-Extra: tests
+Requires-Dist: codecov ; extra == 'tests'
+Requires-Dist: flake8 ; extra == 'tests'
+Requires-Dist: hilbertcurve ; extra == 'tests'
+Requires-Dist: geopandas ; extra == 'tests'
+Requires-Dist: hypothesis ; extra == 'tests'
+Requires-Dist: keyring ; extra == 'tests'
+Requires-Dist: pytest-cov ; extra == 'tests'
+Requires-Dist: pytest ; extra == 'tests'
+Requires-Dist: rfc3986 ; extra == 'tests'
+Requires-Dist: scipy ; extra == 'tests'
+Requires-Dist: shapely ; extra == 'tests'
+Requires-Dist: twine ; extra == 'tests'
+
+<img src="https://github.com/holoviz/spatialpandas/raw/main/doc/_static/logo_horizontal.png" data-canonical-src="https://github.com/holoviz/spatialpandas/raw/main/doc/_static/logo_horizontal.png" width="380"/><br>
+
+-----------------
+
+# Pandas and Dask extensions for vectorized spatial and geometric operations.
+
+|    |    |
+| --- | --- |
+| Build Status | [![pytest](https://github.com/holoviz/spatialpandas/workflows/tests/badge.svg)](https://github.com/holoviz/spatialpandas/actions?query=workflow%3Atests) |
+| Latest dev release | [![Github tag](https://img.shields.io/github/tag/holoviz/spatialpandas.svg?label=tag&colorB=11ccbb)](https://github.com/holoviz/spatialpandas/tags)|
+| Latest release | [![Github release](https://img.shields.io/github/release/holoviz/spatialpandas.svg?label=tag&colorB=11ccbb)](https://github.com/holoviz/spatialpandas/releases) [![PyPI version](https://img.shields.io/pypi/v/spatialpandas.svg?colorB=cc77dd)](https://pypi.python.org/pypi/spatialpandas) [![spatialpandas version](https://img.shields.io/conda/v/pyviz/spatialpandas.svg?colorB=4488ff&style=flat)](https://anaconda.org/pyviz/spatialpandas) [![conda-forge version](https://img.shields.io/conda/v/conda-forge/spatialpandas.svg?label=conda%7Cconda-forge&colorB=4488ff)](https://anaconda.org/conda-forge/spatialpandas) [![defaults version](https://img.shields.io/conda/v/anaconda/spatialpandas.svg?label=conda%7Cdefaults&style=flat&colorB=4488ff)](https://anaconda.org/anaconda/spatialpandas) |
+| Python | [![Python support](https://img.shields.io/pypi/pyversions/spatialpandas.svg)](https://pypi.org/project/spatialpandas/)
+| Support | [![Discourse](https://img.shields.io/discourse/status?server=https%3A%2F%2Fdiscourse.holoviz.org)](https://discourse.holoviz.org/) |
+
+-----------------
+
+Spatialpandas provides Pandas and Dask extensions for vectorized spatial and geometric operations, such as fast, spatially indexed rendering of large collections of polygons, lines, or points. For more information, see the [overview notebook](https://nbviewer.jupyter.org/github/holoviz/spatialpandas/blob/main/examples/Overview.ipynb) and the [design document](https://github.com/holoviz/spatialpandas/issues/1#issue-513306469).
