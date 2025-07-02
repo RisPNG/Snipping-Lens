@@ -136,7 +136,7 @@ def kill_tray():
 def snippingtool_running():
     for proc in psutil.process_iter(["name"]):
         try:
-            if proc.info["name"] and proc.info["name"].lower() == "snippingtool.exe":
+            if proc.info["name"] and proc.info["name"].lower() in ["snippingtool.exe", "ScreenClippingHost.exe"]:
                 return True
         except Exception:
             continue
