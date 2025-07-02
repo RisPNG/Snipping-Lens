@@ -1,1 +1,0 @@
-CreateObject("Wscript.Shell").Run "install.bat", 1, True
