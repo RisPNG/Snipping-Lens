@@ -46,5 +46,3 @@ if !NEW_VENV!==1 (
     "%VENV_PATH%\Scripts\python.exe" -m pip install --upgrade pip
     "%VENV_PATH%\Scripts\python.exe" -m pip install -r "%REQUIREMENTS%"
 )
-
-pause

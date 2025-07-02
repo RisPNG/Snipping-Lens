@@ -7,3 +7,5 @@ Set oLink = oWS.CreateShortcut(scriptDir & "\Snipping Lens.lnk")
 oLink.TargetPath = scriptDir & "\bin\win\src\run.vbs"
 oLink.IconLocation = scriptDir & "\bin\win\src\sniplens.ico"
 oLink.Save
+
+MsgBox "Installation complete. Please launch Snipping Lens 3 using the generated shortcut.", vbInformation, "Snipping Lens 3 Setup"
