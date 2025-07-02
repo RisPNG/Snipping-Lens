@@ -318,6 +318,9 @@ class SettingsHandler(FileSystemEventHandler):
 
 
 if __name__ == "__main__":
+    if not is_tray_running():
+        launch_tray()
+    
     threading.Thread(target=keypress_listener, daemon=True).start()
     threading.Thread(target=clipboard_monitor_loop, daemon=True).start()
     threading.Thread(target=watchdog_tray_monitor, daemon=True).start()
