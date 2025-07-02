@@ -30,7 +30,7 @@ Snipping Lens is a cross-platform application that automatically detects when yo
 
 https://github.com/user-attachments/assets/56979ab6-48e1-4112-af36-c053e9e17089
 
-v3 demo soon.
+Current demo is for older versions. Snipping Lens 3 demo will be uploaded soon.
 
 ## Installation
 
@@ -72,7 +72,7 @@ As long as Litterbox returns the expected response (a direct image URL) and as l
 
 ## Building from Source
 
-Python 3.10 is recommended. If you use the provided installation scripts (`build-windows.bat` or `build-linux.sh`), all required dependencies will be installed automatically.
+For Windows: `setup_win.vbs` already builds the application from source using its own Python 3.10 environment. If you want to use your own Python environment, you need to adjust the path in install.bat.
 
 ## Support and Contributing
 
