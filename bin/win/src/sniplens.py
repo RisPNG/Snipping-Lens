@@ -4,6 +4,7 @@ import json
 import subprocess
 import psutil
 import logging
+import atexit
 
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 from PySide6.QtGui import QIcon, QAction
@@ -14,8 +15,45 @@ EXE_DIR = os.path.dirname(
 )
 EXIT_WATCHDOG = os.path.join(EXE_DIR, ".exit_watchdog")
 SETTINGS_PATH = os.path.join(EXE_DIR, "settings.json")
-LOCKFILE = os.path.join(EXE_DIR, ".flet_config.lock")
+LOCKFILE_APP = os.path.join(EXE_DIR, ".flet_config.lock")
+LOCKFILE = os.path.join(EXE_DIR, ".sniplens.lock")
 LOG_FILE = os.path.join(EXE_DIR, "sniplens.log")
+
+
+def singleton_lock():
+    if os.path.exists(LOCKFILE):
+        try:
+            with open(LOCKFILE, "r") as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                proc = psutil.Process(pid)
+                if "python" in proc.name().lower() and any(
+                    "sniplens.py" in part for part in proc.cmdline()
+                ):
+                    print(
+                        "sniplens.py is already running (PID {}). Exiting.".format(pid)
+                    )
+                    sys.exit(0)
+        except Exception:
+            pass
+        try:
+            os.remove(LOCKFILE)
+        except Exception:
+            pass
+    with open(LOCKFILE, "w") as f:
+        f.write(str(os.getpid()))
+
+
+def remove_lock():
+    try:
+        if os.path.exists(LOCKFILE):
+            os.remove(LOCKFILE)
+    except Exception:
+        pass
+
+
+singleton_lock()
+atexit.register(remove_lock)
 
 logging.basicConfig(
     filename=LOG_FILE,
@@ -86,9 +124,9 @@ def load_settings():
 
 
 def open_flet_window():
-    if os.path.exists(LOCKFILE):
+    if os.path.exists(LOCKFILE_APP):
         try:
-            with open(LOCKFILE, "r") as f:
+            with open(LOCKFILE_APP, "r") as f:
                 pid = int(f.read().strip())
             if psutil.pid_exists(pid):
                 proc = psutil.Process(pid)
@@ -98,7 +136,7 @@ def open_flet_window():
         except Exception:
             pass
         try:
-            os.remove(LOCKFILE)
+            os.remove(LOCKFILE_APP)
         except Exception:
             pass
     logging.info("Launching Snipping Lens main window.")

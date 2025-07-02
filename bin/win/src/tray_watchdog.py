@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import atexit
 import subprocess
 import psutil
 import time
@@ -21,7 +22,46 @@ EXE_DIR = os.path.dirname(
 )
 EXIT_WATCHDOG = os.path.join(EXE_DIR, ".exit_watchdog")
 SETTINGS_PATH = os.path.join(EXE_DIR, "settings.json")
+LOCKFILE = os.path.join(EXE_DIR, ".tray_watchdog.lock")
 LOG_FILE = os.path.join(EXE_DIR, "sniplens.log")
+
+
+def singleton_lock():
+    if os.path.exists(LOCKFILE):
+        try:
+            with open(LOCKFILE, "r") as f:
+                pid = int(f.read().strip())
+            if psutil.pid_exists(pid):
+                proc = psutil.Process(pid)
+                if "python" in proc.name().lower() and any(
+                    "tray_watchdog.py" in part for part in proc.cmdline()
+                ):
+                    print(
+                        "tray_watchdog.py is already running (PID {}). Exiting.".format(
+                            pid
+                        )
+                    )
+                    sys.exit(0)
+        except Exception:
+            pass
+        try:
+            os.remove(LOCKFILE)
+        except Exception:
+            pass
+    with open(LOCKFILE, "w") as f:
+        f.write(str(os.getpid()))
+
+
+def remove_lock():
+    try:
+        if os.path.exists(LOCKFILE):
+            os.remove(LOCKFILE)
+    except Exception:
+        pass
+
+
+singleton_lock()
+atexit.register(remove_lock)
 
 logging.basicConfig(
     filename=LOG_FILE,
@@ -59,9 +99,7 @@ def is_tray_running():
             if pid == current_pid:
                 continue
             cmdline = proc.info["cmdline"]
-            if cmdline and any(
-                "sniplens.py" in part or "sniplens.exe" in part for part in cmdline
-            ):
+            if cmdline and any("sniplens.py" in part for part in cmdline):
                 return True
         except Exception:
             continue
@@ -89,9 +127,7 @@ def kill_tray():
     for proc in psutil.process_iter(["pid", "cmdline"]):
         try:
             cmdline = proc.info["cmdline"]
-            if cmdline and any(
-                "sniplens.py" in part or "sniplens.exe" in part for part in cmdline
-            ):
+            if cmdline and any("sniplens.py" in part for part in cmdline):
                 proc.kill()
         except Exception:
             continue
@@ -240,20 +276,22 @@ def clipboard_monitor_loop():
         last_snip_running = now_running
         time.sleep(0.2)
 
+
 def watchdog_tray_monitor():
     missing_counter = 0
-    check_interval = 1   # seconds
-    max_missing = 5      # exit after 5 seconds of missing tray
+    check_interval = 1
+    max_missing = 5
 
     while True:
         if not is_tray_running():
             missing_counter += 1
             if missing_counter >= max_missing:
-                logging.info("[Watchdog] Tray not detected for 5 seconds. Exiting watchdog.")
+                logging.info("[Watchdog] Exiting watchdog...")
                 os._exit(0)
         else:
             missing_counter = 0
         time.sleep(check_interval)
+
 
 class SettingsHandler(FileSystemEventHandler):
     def __init__(self):
