@@ -8,4 +8,6 @@ oLink.TargetPath = scriptDir & "\bin\win\src\run.vbs"
 oLink.IconLocation = scriptDir & "\bin\win\src\sniplens.ico"
 oLink.Save
 
-MsgBox "Installation complete. Please launch Snipping Lens 3 using the generated shortcut.", vbInformation, "Snipping Lens 3 Setup"
+oWS.Run Chr(34) & scriptDir & "\Snipping Lens.lnk" & Chr(34), 1, False
+
+MsgBox "Installation complete. Snipping Lens 3 is now running in the taskbar.", vbInformation, "Snipping Lens 3 Setup"

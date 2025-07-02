@@ -3,10 +3,6 @@ import os
 import sys
 import json
 import asyncio
-import threading
-import time
-import logging
-import psutil
 
 EXE_DIR = os.path.dirname(
     os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__)
@@ -14,12 +10,6 @@ EXE_DIR = os.path.dirname(
 LOCKFILE = os.path.join(EXE_DIR, ".flet_config.lock")
 SETTINGS_PATH = os.path.join(EXE_DIR, "settings.json")
 LOG_FILE = os.path.join(EXE_DIR, "sniplens.log")
-
-logging.basicConfig(
-    filename=LOG_FILE,
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
 
 
 def write_pid_lock():
@@ -73,37 +63,6 @@ def save_settings(settings):
         print("Failed to save settings:", e)
 
 
-def is_tray_running():
-    current_pid = os.getpid()
-    for proc in psutil.process_iter(["pid", "cmdline"]):
-        try:
-            pid = proc.info["pid"]
-            if pid == current_pid:
-                continue
-            cmdline = proc.info["cmdline"]
-            if cmdline and any("sniplens.py" in part for part in cmdline):
-                return True
-        except Exception:
-            continue
-    return False
-
-
-def config_tray_monitor():
-    missing_counter = 0
-    check_interval = 1
-    max_missing = 5
-
-    while True:
-        if not is_tray_running():
-            missing_counter += 1
-            if missing_counter >= max_missing:
-                logging.info("[Watchdog] Exiting window...")
-                os._exit(0)
-        else:
-            missing_counter = 0
-        time.sleep(check_interval)
-
-
 def main(page: ft.Page):
     settings = load_settings()
     page.title = "Snipping Lens"
@@ -136,9 +95,15 @@ def main(page: ft.Page):
         on_change=on_status_toggle,
         padding=ft.padding.symmetric(0, 10),
         controls=[
-            ft.Text("Pause"),
-            ft.Text("Tray Only"),
-            ft.Text("Always On"),
+            ft.Text("Pause", tooltip="Disable all features."),
+            ft.Text(
+                "Tray Only",
+                tooltip="Trigger Google Lens searches only if snip is launched from the tray.",
+            ),
+            ft.Text(
+                "Always On",
+                tooltip="Trigger Google Lens searches regardless of where snip is launched from.",
+            ),
         ],
     )
 
@@ -187,7 +152,6 @@ def main(page: ft.Page):
 
 
 write_pid_lock()
-threading.Thread(target=config_tray_monitor, daemon=True).start()
 try:
     ft.app(target=main)
 finally:
