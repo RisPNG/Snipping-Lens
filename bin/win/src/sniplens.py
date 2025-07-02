@@ -63,7 +63,7 @@ logging.basicConfig(
 
 DEFAULT_SETTINGS_WRAPPED = {
     "tray_ui_enabled": {"value": True, "description": "Enable or disable the tray UI"},
-    "tray_status": {"value": 1, "description": "0=Pause, 1=Tray Only, 2=Always On"},
+    "tray_status": {"value": 2, "description": "0=Pause, 1=Tray Only, 2=Always On"},
 }
 
 DEFAULT_SETTINGS = {k: v["value"] for k, v in DEFAULT_SETTINGS_WRAPPED.items()}

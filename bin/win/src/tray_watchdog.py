@@ -138,7 +138,9 @@ def snippingtool_running():
         try:
             if proc.info["name"] and proc.info["name"].lower() in [
                 "snippingtool.exe",
-                "ScreenClippingHost.exe",
+                "screenclippinghost.exe",
+                "sniptool.exe",
+                "snipandsketch.exe",
             ]:
                 return True
         except Exception:
