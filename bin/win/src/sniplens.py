@@ -5,6 +5,7 @@ import subprocess
 import psutil
 import logging
 import atexit
+import uuid
 
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 from PySide6.QtGui import QIcon, QAction
@@ -123,6 +124,21 @@ def load_settings():
         os.execl(python, python, *sys.argv)
 
 
+def update_settings(updates: dict):
+    """Safely update and merge settings, then save to disk."""
+    try:
+        try:
+            with open(SETTINGS_PATH, "r") as f:
+                raw = json.load(f)
+        except Exception:
+            raw = {}
+        raw.update(updates)
+        with open(SETTINGS_PATH, "w") as f:
+            json.dump(raw, f, indent=4)
+    except Exception as e:
+        logging.error("Failed to update settings: %s", e)
+
+
 def open_flet_window():
     if os.path.exists(LOCKFILE_APP):
         try:
@@ -199,7 +215,12 @@ class TrayApp(QObject):
     def icon_clicked(self, reason):
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
             try:
-                logging.info("Tray left-clicked: launching Snipping Tool.")
+                logging.info("Tray left-clicked: preparing for tray-based snip.")
+                token = str(uuid.uuid4())
+                update_settings({"tray_snip_token": token})
+                logging.info(f"Generated snip token: {token}")
+
+                logging.info("Launching Snipping Tool via ms-screenclip.")
                 subprocess.Popen(["explorer.exe", "ms-screenclip:"])
             except Exception as e:
                 logging.error(f"Failed to launch Snipping Tool: {e}")

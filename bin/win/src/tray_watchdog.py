@@ -10,7 +10,6 @@ import copykitten
 from PIL import Image
 from io import BytesIO
 import requests
-import keyboard
 import threading
 import webbrowser
 from watchdog.observers import Observer
@@ -56,6 +55,7 @@ def remove_lock():
     try:
         if os.path.exists(LOCKFILE):
             os.remove(LOCKFILE)
+            logging.info("[Watchdog] Lockfile removed on clean exit.")
     except Exception:
         pass
 
@@ -176,24 +176,20 @@ def get_tray_status():
     return int(val)
 
 
-def get_last_litterbox_url():
-    raw = get_settings()
-    return raw.get("last_litterbox_url", "")
-
-
-def get_snip_after_keypress():
-    raw = get_settings()
-    return raw.get("snip_after_keypress", False)
-
-
-def update_settings(updates: dict):
-    """Safely update and merge settings, then save to disk."""
+def update_settings(updates: dict, delete_keys: list = None):
+    """Safely update settings, with an option to delete keys."""
     try:
         try:
             with open(SETTINGS_PATH, "r") as f:
                 raw = json.load(f)
         except Exception:
             raw = {}
+
+        if delete_keys:
+            for key in delete_keys:
+                if key in raw:
+                    del raw[key]
+
         raw.update(updates)
         with open(SETTINGS_PATH, "w") as f:
             json.dump(raw, f, indent=4)
@@ -201,41 +197,36 @@ def update_settings(updates: dict):
         logging.error("Failed to update settings: %s", e)
 
 
-key_pressed = False
-key_lock = threading.Lock()
-
-
-def keypress_listener():
-    global key_pressed
-    while True:
-        event = keyboard.read_event(suppress=False)
-        if event.event_type == keyboard.KEY_DOWN:
-            with key_lock:
-                key_pressed = True
-
-
 def clipboard_monitor_loop():
     last_snip_running = False
-    global key_pressed
     last_hash = get_settings().get("last_detected_image", "")
     while True:
+        if os.path.exists(EXIT_WATCHDOG):
+            break
+
         now_running = snippingtool_running()
-        if not last_snip_running and now_running:
-            with key_lock:
-                update_settings({"snip_after_keypress": key_pressed})
-                key_pressed = False
+
         if last_snip_running and not now_running:
             logging.info("[SnippingTool] Detected close. Checking clipboard...")
             hash_val, image_data = grab_clipboard_image_and_hash()
+
+            settings = get_settings()
+            tray_snip_token = settings.get("tray_snip_token")
+            is_tray_snip = bool(tray_snip_token)
+
+            if is_tray_snip:
+                logging.info(f"Consumed snip token: {tray_snip_token}")
+                # Atomically consume the token by deleting it from settings
+                update_settings({}, delete_keys=["tray_snip_token"])
+
             if hash_val and hash_val != last_hash:
                 logging.info("[SnippingTool] New clipboard image found.")
                 update_settings({"last_detected_image": hash_val})
                 tray_status = get_tray_status()
-                snip_after_keypress = get_snip_after_keypress()
-                do_upload = tray_status == 2 or (
-                    tray_status == 1 and not snip_after_keypress
-                )
+
+                do_upload = tray_status == 2 or (tray_status == 1 and is_tray_snip)
                 do_open_lens = do_upload
+
                 if do_upload and image_data is not None:
                     pixels, width, height = image_data
                     img = Image.frombytes(
@@ -278,6 +269,7 @@ def clipboard_monitor_loop():
                     )
             else:
                 logging.info("[SnippingTool] No new image or duplicate.")
+
         last_snip_running = now_running
         time.sleep(0.2)
 
@@ -288,11 +280,16 @@ def watchdog_tray_monitor():
     max_missing = 5
 
     while True:
+        if os.path.exists(EXIT_WATCHDOG):
+            break
+
         if not is_tray_running():
             missing_counter += 1
             if missing_counter >= max_missing:
-                logging.info("[Watchdog] Exiting watchdog...")
-                os._exit(0)
+                logging.info("[Watchdog] Tray app missing. Signaling watchdog exit.")
+                with open(EXIT_WATCHDOG, "w") as f:
+                    f.write("exit from tray monitor")
+                break
         else:
             missing_counter = 0
         time.sleep(check_interval)
@@ -309,9 +306,6 @@ class SettingsHandler(FileSystemEventHandler):
 
     def on_modified(self, event):
         if os.path.abspath(event.src_path) == os.path.abspath(SETTINGS_PATH):
-            if os.path.exists(EXIT_WATCHDOG):
-                os.remove(EXIT_WATCHDOG)
-                os._exit(0)
             current_state = tray_setting()
             if current_state != self.last_state:
                 if current_state:
@@ -326,7 +320,7 @@ if __name__ == "__main__":
     if not is_tray_running():
         launch_tray()
 
-    threading.Thread(target=keypress_listener, daemon=True).start()
+    logging.info("[Watchdog] Starting background threads.")
     threading.Thread(target=clipboard_monitor_loop, daemon=True).start()
     threading.Thread(target=watchdog_tray_monitor, daemon=True).start()
 
@@ -335,11 +329,22 @@ if __name__ == "__main__":
     observer.schedule(event_handler, EXE_DIR, recursive=False)
     observer.start()
     try:
-        while True:
-            if os.path.exists(EXIT_WATCHDOG):
-                os.remove(EXIT_WATCHDOG)
-                break
+        while not os.path.exists(EXIT_WATCHDOG):
             time.sleep(0.2)
+
+        logging.info("[Watchdog] Exit signal received. Shutting down.")
+
+        try:
+            os.remove(EXIT_WATCHDOG)
+        except OSError:
+            pass
+
     except KeyboardInterrupt:
+        logging.info("[Watchdog] Keyboard interrupt received. Shutting down.")
+        with open(EXIT_WATCHDOG, "w") as f:
+            f.write("exit from keyboard interrupt")
+
+    finally:
         observer.stop()
-    observer.join()
+        observer.join()
+        logging.info("[Watchdog] Observer stopped. Exiting.")
