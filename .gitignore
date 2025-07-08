@@ -182,3 +182,4 @@ cython_debug/
 *.zip
 *.lnk
 *.lock
+!tee-x64.exe
