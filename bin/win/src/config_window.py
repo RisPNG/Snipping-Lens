@@ -8,8 +8,8 @@ EXE_DIR = os.path.dirname(
     os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__)
 )
 LOCKFILE = os.path.join(EXE_DIR, ".flet_config.lock")
-SETTINGS_PATH = os.path.join(EXE_DIR, "settings.json")
-LOG_FILE = os.path.join(EXE_DIR, "sniplens.log")
+SETTINGS_PATH = os.path.abspath(os.path.join(EXE_DIR, "..", "config", "settings.json"))
+LOG_FILE = os.path.abspath(os.path.join(EXE_DIR, "..", "logs", "sniplens.log"))
 
 
 def write_pid_lock():
@@ -66,7 +66,7 @@ def save_settings(settings):
 def main(page: ft.Page):
     settings = load_settings()
     page.title = "Snipping Lens"
-    page.window.icon = os.path.join(EXE_DIR, "sniplens.ico")
+    page.window.icon = os.path.abspath(os.path.join(EXE_DIR, "..", "assets", "sniplens.ico"))
     page.window.width = 700
     page.window.height = 500
     page.window.min_width = 700

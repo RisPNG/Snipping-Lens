@@ -20,9 +20,9 @@ EXE_DIR = os.path.dirname(
     os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__)
 )
 EXIT_WATCHDOG = os.path.join(EXE_DIR, ".exit_watchdog")
-SETTINGS_PATH = os.path.join(EXE_DIR, "settings.json")
+SETTINGS_PATH = os.path.abspath(os.path.join(EXE_DIR, "..", "config", "settings.json"))
 LOCKFILE = os.path.join(EXE_DIR, ".tray_watchdog.lock")
-LOG_FILE = os.path.join(EXE_DIR, "sniplens.log")
+LOG_FILE = os.path.abspath(os.path.join(EXE_DIR, "..", "logs", "sniplens.log"))
 
 
 def singleton_lock():

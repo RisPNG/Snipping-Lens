@@ -15,10 +15,10 @@ EXE_DIR = os.path.dirname(
     os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__)
 )
 EXIT_WATCHDOG = os.path.join(EXE_DIR, ".exit_watchdog")
-SETTINGS_PATH = os.path.join(EXE_DIR, "settings.json")
+SETTINGS_PATH = os.path.abspath(os.path.join(EXE_DIR, "..", "config", "settings.json"))
 LOCKFILE_APP = os.path.join(EXE_DIR, ".flet_config.lock")
 LOCKFILE = os.path.join(EXE_DIR, ".sniplens.lock")
-LOG_FILE = os.path.join(EXE_DIR, "sniplens.log")
+LOG_FILE = os.path.abspath(os.path.join(EXE_DIR, "..", "logs", "sniplens.log"))
 
 
 def singleton_lock():
@@ -166,7 +166,7 @@ class TrayApp(QObject):
         self.app.setQuitOnLastWindowClosed(False)
         self.settings = load_settings()
 
-        icon_path = "sniplens.png"
+        icon_path = os.path.abspath(os.path.join(EXE_DIR, "..", "assets", "sniplens.png"))
         self.tray_icon = QSystemTrayIcon(QIcon(resource_path(icon_path)))
         self.tray_icon.setToolTip("Snipping Lens")
         self.tray_icon.activated.connect(self.icon_clicked)
