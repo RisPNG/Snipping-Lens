@@ -64,7 +64,13 @@ Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the lates
 
 ### Where are my screenshots uploaded? Are they stored permanently?
 
-Screenshots are uploaded to [Litterbox](https://litterbox.catbox.moe/), a free and anonymous image hosting service, solely for the purpose of generating a URL that can be used with Google Lens. Images uploaded to Litterbox are not stored permanently—they automatically expire and are deleted after 1 hour. No user information is attached to the upload, and the application does not keep any record of your screenshots.
+Screenshots are uploaded to [Litterbox](https://litterbox.catbox.moe/), a free and anonymous image hosting service, solely for the purpose of generating a URL that can be used with Google Lens. Images uploaded to Litterbox are not stored permanently, they automatically expire and are deleted after 1 hour. No user information is attached to the upload, and the application does not keep any record of your screenshots.
+
+### Why not use the locally stored image to query Google Lens?
+
+Simplicity, getting an image from user's clipboard and uploading it to a file hosting site is more straightforward than figuring out where the image is saved on the device for each operating system.
+
+I'm sure you're worried about privacy, but you shouldn't be uploading confidential information to Google in the first place anyway.
 
 ### Limitations & Longevity
 
@@ -72,7 +78,7 @@ As long as Litterbox returns the expected response (a direct image URL) and as l
 
 ## Building from Source
 
-For Windows: `setup_win.vbs` already builds the application from source using its own Python 3.10 environment. If you want to use your own Python environment, you need to adjust the path in install.bat.
+For Windows: `setup_win.vbs` already builds the application from source using its own Python 3.10 environment. If you want to use your own Python environment, you need to adjust the path inside the scripts in the bin/win folder.
 
 ## Support and Contributing
 
