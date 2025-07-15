@@ -3,6 +3,7 @@ import os
 import sys
 import json
 import asyncio
+import winshell
 
 EXE_DIR = os.path.dirname(
     os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__)
@@ -10,6 +11,7 @@ EXE_DIR = os.path.dirname(
 LOCKFILE = os.path.join(EXE_DIR, ".flet_config.lock")
 SETTINGS_PATH = os.path.abspath(os.path.join(EXE_DIR, "..", "config", "settings.json"))
 LOG_FILE = os.path.abspath(os.path.join(EXE_DIR, "..", "logs", "sniplens.log"))
+STARTUP = winshell.startup()
 
 
 def write_pid_lock():
@@ -39,10 +41,12 @@ def load_settings():
 
         return {
             "tray_status": val("tray_status", 0),
+            "startup": val("startup", 0),
         }
     except Exception:
         return {
             "tray_status": 2,
+            "startup": 0,
         }
 
 
@@ -56,6 +60,10 @@ def save_settings(settings):
         raw["tray_status"] = {
             "value": settings["tray_status"],
             "description": "0=Pause, 1=Tray Only, 2=Always On",
+        }
+        raw["startup"] = {
+            "value": settings["startup"],
+            "description": "0=Off, 1=On",
         }
         with open(SETTINGS_PATH, "w") as f:
             json.dump(raw, f, indent=4)
@@ -75,10 +83,15 @@ def main(page: ft.Page):
     page.horizontal_alignment = "center"
     page.vertical_alignment = "center"
 
-    color_map = {
+    status_color_map = {
         0: "#ea4335",
         1: "#fbbc04",
         2: "#4285f4",
+    }
+
+    startup_color_map = {
+        0: "#ea4335",
+        1: "#4285f4",
     }
 
     def on_status_toggle(e):
@@ -86,12 +99,12 @@ def main(page: ft.Page):
         settings["tray_status"] = idx
         save_settings(settings)
         status_toggle.selected_index = idx
-        status_toggle.thumb_color = color_map[idx]
+        status_toggle.thumb_color = status_color_map[idx]
         page.update()
 
     status_toggle = ft.CupertinoSlidingSegmentedButton(
         selected_index=settings["tray_status"],
-        thumb_color=color_map[settings["tray_status"]],
+        thumb_color=status_color_map[settings["tray_status"]],
         on_change=on_status_toggle,
         padding=ft.padding.symmetric(0, 10),
         controls=[
@@ -104,6 +117,25 @@ def main(page: ft.Page):
                 "Always On",
                 tooltip="Trigger Google Lens searches regardless of where snip is launched from.",
             ),
+        ],
+    )
+
+    def on_startup_toggle(e):
+        idx = int(e.data)
+        settings["startup"] = idx
+        save_settings(settings)
+        startup_toggle.selected_index = idx
+        startup_toggle.thumb_color = startup_color_map[idx]
+        page.update()
+
+    startup_toggle = ft.CupertinoSlidingSegmentedButton(
+        selected_index=settings["startup"],
+        thumb_color=startup_color_map[settings["startup"]],
+        on_change=on_startup_toggle,
+        padding=ft.padding.symmetric(0, 10),
+        controls=[
+            ft.Text("Off"),
+            ft.Text("On"),
         ],
     )
 
@@ -121,8 +153,26 @@ def main(page: ft.Page):
     )
 
     page.add(
-        ft.Text("Mode", size=22, weight=ft.FontWeight.BOLD),
-        status_toggle,
+        ft.Row(
+            [
+                ft.Column(
+                    [
+                        ft.Text("Activation Mode", size=22, weight=ft.FontWeight.BOLD),
+                        status_toggle,
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+                ft.Column(
+                    [
+                        ft.Text("Startup", size=22, weight=ft.FontWeight.BOLD),
+                        startup_toggle,
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            spacing=50
+        ),
         log_field,
     )
 
