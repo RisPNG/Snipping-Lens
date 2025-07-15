@@ -4,6 +4,9 @@ import sys
 import json
 import asyncio
 import winshell
+import subprocess
+import shutil
+import logging
 
 EXE_DIR = os.path.dirname(
     os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__)
@@ -12,7 +15,15 @@ LOCKFILE = os.path.join(EXE_DIR, ".flet_config.lock")
 SETTINGS_PATH = os.path.abspath(os.path.join(EXE_DIR, "..", "config", "settings.json"))
 LOG_FILE = os.path.abspath(os.path.join(EXE_DIR, "..", "logs", "sniplens.log"))
 STARTUP = winshell.startup()
+VBS_PATH = os.path.abspath(os.path.join(EXE_DIR, "..", "..", "..", "create_lnk.vbs"))
+LNK_NAME = "Snipping Lens.lnk"
+LNK_PATH = os.path.abspath(os.path.join(EXE_DIR, "..", "..", "..", LNK_NAME))
 
+logging.basicConfig(
+    filename=LOG_FILE,
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
 
 def write_pid_lock():
     try:
@@ -126,6 +137,26 @@ def main(page: ft.Page):
         save_settings(settings)
         startup_toggle.selected_index = idx
         startup_toggle.thumb_color = startup_color_map[idx]
+
+        startup_lnk_path = os.path.join(STARTUP, LNK_NAME)
+
+        if idx == 1:
+            try:
+                subprocess.run(["cscript", VBS_PATH], check=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                if os.path.exists(LNK_PATH):
+                    shutil.copy(LNK_PATH, startup_lnk_path)
+                    logging.info("Snipping Lens added to startup.")
+            except (subprocess.CalledProcessError, FileNotFoundError, OSError) as ex:
+                logging.info("Error adding Snipping Lens to startup.")
+
+        else:
+            try:
+                if os.path.exists(startup_lnk_path):
+                    os.remove(startup_lnk_path)
+                    logging.info("Snipping Lens removed from startup.")
+            except OSError as ex:
+                logging.info("Error removing Snipping Lens from startup.")
+
         page.update()
 
     startup_toggle = ft.CupertinoSlidingSegmentedButton(

@@ -7,3 +7,5 @@ PySide6_Addons==6.9.1
 PySide6_Essentials==6.9.1
 Requests==2.32.4
 watchdog==6.0.0
+winshell==0.6
+pywin32==311
