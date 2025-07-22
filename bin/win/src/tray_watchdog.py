@@ -317,6 +317,11 @@ class SettingsHandler(FileSystemEventHandler):
 
 
 if __name__ == "__main__":
+    try:
+        os.remove(EXIT_WATCHDOG)
+    except OSError:
+        pass
+
     if not is_tray_running():
         launch_tray()
 
