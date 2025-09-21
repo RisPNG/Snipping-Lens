@@ -9,3 +9,4 @@ Requests==2.32.4
 watchdog==6.0.0
 winshell==0.6
 pywin32==311
+pynput==1.7.6

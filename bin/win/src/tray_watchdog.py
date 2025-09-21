@@ -15,6 +15,17 @@ import webbrowser
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import logging
+import signal
+
+# Import for hotkey functionality
+try:
+    import pynput
+    from pynput import keyboard
+
+    HOTKEY_AVAILABLE = True
+except ImportError:
+    HOTKEY_AVAILABLE = False
+    logging.warning("pynput not available. Alternate hotkey functionality disabled.")
 
 EXE_DIR = os.path.dirname(
     os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__)
@@ -60,14 +71,29 @@ def remove_lock():
         pass
 
 
+def signal_handler(signum, frame):
+    """Handle termination signals gracefully"""
+    logging.info(f"[Watchdog] Received signal {signum}, cleaning up...")
+    remove_lock()
+    sys.exit(0)
+
+
 singleton_lock()
 atexit.register(remove_lock)
+
+# Register signal handlers for proper cleanup
+signal.signal(signal.SIGTERM, signal_handler)
+signal.signal(signal.SIGINT, signal_handler)
 
 logging.basicConfig(
     filename=LOG_FILE,
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
+
+# Global variable to hold the hotkey listener
+hotkey_listener = None
+current_hotkey = ""
 
 try:
     if os.path.exists(SETTINGS_PATH):
@@ -84,6 +110,12 @@ try:
         raw["tray_ui_enabled"] = {
             "value": True,
             "description": "Enable or disable the tray UI",
+        }
+    # Add alternate_hotkey if it doesn't exist
+    if "alternate_hotkey" not in raw:
+        raw["alternate_hotkey"] = {
+            "value": "",
+            "description": "Alternate hotkey for Windows Snipping Tool (e.g., 'ctrl+shift+s')",
         }
     with open(SETTINGS_PATH, "w") as f:
         json.dump(raw, f, indent=4)
@@ -116,6 +148,94 @@ def tray_setting():
         return bool(v)
     except Exception:
         return True
+
+
+def get_alternate_hotkey():
+    """Get the alternate hotkey from settings"""
+    try:
+        with open(SETTINGS_PATH, "r") as f:
+            raw = json.load(f)
+        v = raw.get("alternate_hotkey", "")
+        if isinstance(v, dict) and "value" in v:
+            return str(v["value"]).strip()
+        return str(v).strip()
+    except Exception:
+        return ""
+
+
+def launch_snipping_tool():
+    """Launch the Windows Snipping Tool"""
+    try:
+        logging.info("[Hotkey] Launching Snipping Tool via alternate hotkey.")
+        subprocess.Popen(["explorer.exe", "ms-screenclip:"])
+    except Exception as e:
+        logging.error(f"[Hotkey] Failed to launch Snipping Tool: {e}")
+
+
+# Remove the old parse_hotkey function since we're not using it anymore
+
+
+def setup_hotkey_listener():
+    """Setup or update the hotkey listener"""
+    global hotkey_listener, current_hotkey
+
+    if not HOTKEY_AVAILABLE:
+        return
+
+    new_hotkey = get_alternate_hotkey()
+
+    # If hotkey hasn't changed, do nothing
+    if new_hotkey == current_hotkey:
+        return
+
+    # Stop existing listener if it exists
+    if hotkey_listener:
+        try:
+            hotkey_listener.stop()
+            logging.info(f"[Hotkey] Stopped listener for: {current_hotkey}")
+        except Exception as e:
+            logging.error(f"[Hotkey] Error stopping listener: {e}")
+        hotkey_listener = None
+
+    current_hotkey = new_hotkey
+
+    # If new hotkey is empty, don't create a new listener
+    if not new_hotkey:
+        logging.info("[Hotkey] No alternate hotkey set.")
+        return
+
+    # Setup new hotkey using string format (much simpler and more reliable)
+    try:
+        # Convert our format to pynput's expected string format
+        # Our format: "ctrl+shift+s" -> pynput format: "<ctrl>+<shift>+s"
+        hotkey_parts = new_hotkey.split("+")
+        pynput_parts = []
+
+        for part in hotkey_parts:
+            part = part.strip().lower()
+            # Map our format to pynput's format
+            if part in ["ctrl", "control"]:
+                pynput_parts.append("<ctrl>")
+            elif part in ["alt"]:
+                pynput_parts.append("<alt>")
+            elif part in ["shift"]:
+                pynput_parts.append("<shift>")
+            elif part in ["win", "cmd", "meta"]:
+                pynput_parts.append("<cmd>")
+            else:
+                # Regular keys don't need brackets
+                pynput_parts.append(part)
+
+        pynput_hotkey = "+".join(pynput_parts)
+
+        # Create GlobalHotKeys with the string format
+        hotkey_listener = keyboard.GlobalHotKeys({pynput_hotkey: launch_snipping_tool})
+        hotkey_listener.start()
+        logging.info(f"[Hotkey] Set up listener for: {new_hotkey} -> {pynput_hotkey}")
+
+    except Exception as e:
+        logging.error(f"[Hotkey] Error setting up hotkey '{new_hotkey}': {e}")
+        current_hotkey = ""
 
 
 def launch_tray():
@@ -295,6 +415,26 @@ def watchdog_tray_monitor():
         time.sleep(check_interval)
 
 
+def hotkey_monitor_loop():
+    """Monitor for hotkey setting changes and update the listener"""
+    last_check_time = 0
+    check_interval = 2  # Check every 2 seconds
+
+    while True:
+        if os.path.exists(EXIT_WATCHDOG):
+            break
+
+        current_time = time.time()
+        if current_time - last_check_time >= check_interval:
+            try:
+                setup_hotkey_listener()
+            except Exception as e:
+                logging.error(f"[Hotkey] Error in hotkey monitor: {e}")
+            last_check_time = current_time
+
+        time.sleep(0.5)
+
+
 class SettingsHandler(FileSystemEventHandler):
     def __init__(self):
         super().__init__()
@@ -303,6 +443,9 @@ class SettingsHandler(FileSystemEventHandler):
             launch_tray()
         elif not self.last_state and is_tray_running():
             kill_tray()
+
+        # Setup initial hotkey listener
+        setup_hotkey_listener()
 
     def on_modified(self, event):
         if os.path.abspath(event.src_path) == os.path.abspath(SETTINGS_PATH):
@@ -315,6 +458,20 @@ class SettingsHandler(FileSystemEventHandler):
                     kill_tray()
                 self.last_state = current_state
 
+            # Check for hotkey changes
+            setup_hotkey_listener()
+
+
+def cleanup_hotkey_listener():
+    """Clean up the hotkey listener on exit"""
+    global hotkey_listener
+    if hotkey_listener:
+        try:
+            hotkey_listener.stop()
+            logging.info("[Hotkey] Cleaned up hotkey listener on exit.")
+        except Exception as e:
+            logging.error(f"[Hotkey] Error cleaning up hotkey listener: {e}")
+
 
 if __name__ == "__main__":
     try:
@@ -322,12 +479,22 @@ if __name__ == "__main__":
     except OSError:
         pass
 
+    # Register cleanup for hotkey listener
+    atexit.register(cleanup_hotkey_listener)
+
     if not is_tray_running():
         launch_tray()
 
     logging.info("[Watchdog] Starting background threads.")
     threading.Thread(target=clipboard_monitor_loop, daemon=True).start()
     threading.Thread(target=watchdog_tray_monitor, daemon=True).start()
+
+    # Start hotkey monitor thread if hotkeys are available
+    if HOTKEY_AVAILABLE:
+        threading.Thread(target=hotkey_monitor_loop, daemon=True).start()
+        logging.info("[Watchdog] Hotkey monitoring enabled.")
+    else:
+        logging.info("[Watchdog] Hotkey monitoring disabled (pynput not available).")
 
     observer = Observer()
     event_handler = SettingsHandler()
@@ -350,6 +517,7 @@ if __name__ == "__main__":
             f.write("exit from keyboard interrupt")
 
     finally:
+        cleanup_hotkey_listener()
         observer.stop()
         observer.join()
         logging.info("[Watchdog] Observer stopped. Exiting.")

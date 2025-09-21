@@ -6,6 +6,7 @@ import psutil
 import logging
 import atexit
 import uuid
+import signal
 
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 from PySide6.QtGui import QIcon, QAction
@@ -49,12 +50,24 @@ def remove_lock():
     try:
         if os.path.exists(LOCKFILE):
             os.remove(LOCKFILE)
+            logging.info("sniplens.py lockfile removed on exit.")
     except Exception:
         pass
 
 
+def signal_handler(signum, frame):
+    """Handle termination signals gracefully"""
+    logging.info(f"Received signal {signum}, cleaning up...")
+    remove_lock()
+    sys.exit(0)
+
+
 singleton_lock()
 atexit.register(remove_lock)
+
+# Register signal handlers for proper cleanup
+signal.signal(signal.SIGTERM, signal_handler)
+signal.signal(signal.SIGINT, signal_handler)
 
 logging.basicConfig(
     filename=LOG_FILE,
@@ -65,6 +78,10 @@ logging.basicConfig(
 DEFAULT_SETTINGS_WRAPPED = {
     "tray_ui_enabled": {"value": True, "description": "Enable or disable the tray UI"},
     "tray_status": {"value": 2, "description": "0=Pause, 1=Tray Only, 2=Always On"},
+    "alternate_hotkey": {
+        "value": "",
+        "description": "Alternate hotkey for Windows Snipping Tool (e.g., 'ctrl+shift+s')",
+    },
 }
 
 DEFAULT_SETTINGS = {k: v["value"] for k, v in DEFAULT_SETTINGS_WRAPPED.items()}
@@ -91,7 +108,7 @@ def extract_values(settings_obj):
 
 
 def validate_settings(raw):
-    for key in ["tray_ui_enabled", "tray_status"]:
+    for key in ["tray_ui_enabled", "tray_status", "alternate_hotkey"]:
         if key not in raw:
             raise ValueError(f"Missing key: {key}")
         value_entry = raw[key]
@@ -106,6 +123,9 @@ def validate_settings(raw):
                 isinstance(value, int) or (isinstance(value, str) and value.isdigit())
             ):
                 raise ValueError(f"{key} must be an integer or digit-string")
+        elif key == "alternate_hotkey":
+            if not isinstance(value, str):
+                raise ValueError(f"{key} must be a string")
 
 
 def load_settings():
@@ -166,7 +186,9 @@ class TrayApp(QObject):
         self.app.setQuitOnLastWindowClosed(False)
         self.settings = load_settings()
 
-        icon_path = os.path.abspath(os.path.join(EXE_DIR, "..", "assets", "sniplens.png"))
+        icon_path = os.path.abspath(
+            os.path.join(EXE_DIR, "..", "assets", "sniplens.png")
+        )
         self.tray_icon = QSystemTrayIcon(QIcon(resource_path(icon_path)))
         self.tray_icon.setToolTip("Snipping Lens")
         self.tray_icon.activated.connect(self.icon_clicked)
@@ -247,14 +269,23 @@ class TrayApp(QObject):
                 json.dump(raw, f, indent=4)
         except Exception as e:
             logging.error(f"Failed to set tray_ui_enabled to False on exit: {e}")
+
+        # Signal watchdog to exit
         with open(EXIT_WATCHDOG, "w") as f:
             f.write("exit")
+
         self.tray_icon.hide()
         logging.info("Tray app exited by user.")
+
+        # Clean up lockfile before exit
+        remove_lock()
         os._exit(0)
 
     def run(self):
-        self.app.exec()
+        try:
+            self.app.exec()
+        finally:
+            remove_lock()
 
 
 if __name__ == "__main__":
