@@ -1,22 +1,24 @@
-import asyncio
-import atexit
-import logging
-import os
-import signal
-import sys
-from pathlib import Path
-
 import flet as ft
+import os
+import sys
+import json
+import asyncio
+import subprocess
+import logging
 
-from settings import (
-    ICON_PATH,
-    LOCKFILE_CONFIG,
-    LOG_FILE,
-    SETUP_LINUX_SH,
-    load_settings,
-    save_settings,
+EXE_DIR = os.path.dirname(
+    os.path.abspath(sys.executable if getattr(sys, "frozen", False) else __file__)
 )
+LOCKFILE = os.path.join(EXE_DIR, ".flet_config.lock")
+SETTINGS_PATH = os.path.abspath(
+    os.path.join(EXE_DIR, "..", "config", "settings.json")
+)
+LOG_FILE = os.path.abspath(os.path.join(EXE_DIR, "..", "logs", "sniplens.log"))
 
+# Detect the full path to setup_linux.sh (three levels up from src/)
+SETUP_SCRIPT = os.path.abspath(os.path.join(EXE_DIR, "..", "..", "..", "setup_linux.sh"))
+AUTOSTART_DIR = os.path.expanduser("~/.config/autostart")
+DESKTOP_FILE = os.path.join(AUTOSTART_DIR, "snipping-lens-startup.desktop")
 
 logging.basicConfig(
     filename=LOG_FILE,
@@ -24,68 +26,123 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 
+# Known modifier keys for left/right distinction
+MODIFIER_KEYS = {
+    "control left": "lctrl",
+    "control right": "rctrl",
+    "alt left": "lalt",
+    "alt right": "ralt",
+    "shift left": "lshift",
+    "shift right": "rshift",
+    "meta left": "lwin",
+    "meta right": "rwin",
+}
 
-def write_pid_lock() -> None:
+# Flet key names that are generic modifiers (no left/right)
+GENERIC_MODIFIER_NAMES = {"control", "alt", "shift", "meta", "cmd"}
+
+
+def write_pid_lock():
     try:
-        with open(LOCKFILE_CONFIG, "w", encoding="utf-8") as f:
+        with open(LOCKFILE, "w") as f:
             f.write(str(os.getpid()))
     except Exception:
         pass
 
 
-def remove_lock() -> None:
+def remove_lock():
     try:
-        if os.path.exists(LOCKFILE_CONFIG):
-            os.remove(LOCKFILE_CONFIG)
+        if os.path.exists(LOCKFILE):
+            os.remove(LOCKFILE)
     except Exception:
         pass
 
 
-def signal_handler(signum, frame) -> None:
-    logging.info("Config window received signal %s, exiting...", signum)
-    remove_lock()
-    sys.exit(0)
+def load_settings():
+    try:
+        with open(SETTINGS_PATH, "r") as f:
+            raw = json.load(f)
+
+        def val(key, default):
+            v = raw.get(key, default)
+            return v["value"] if isinstance(v, dict) and "value" in v else v
+
+        return {
+            "tray_status": val("tray_status", 2),
+            "startup": val("startup", 0),
+            "alternate_hotkey": val("alternate_hotkey", "alt+ctrl+\\"),
+        }
+    except Exception:
+        return {
+            "tray_status": 2,
+            "startup": 0,
+            "alternate_hotkey": "alt+ctrl+\\",
+        }
 
 
-AUTOSTART_DIR = Path.home() / ".config" / "autostart"
-AUTOSTART_DESKTOP = AUTOSTART_DIR / "snipping-lens-startup.desktop"
+def save_settings(settings):
+    try:
+        try:
+            with open(SETTINGS_PATH, "r") as f:
+                raw = json.load(f)
+        except Exception:
+            raw = {}
+        raw["tray_status"] = {
+            "value": settings["tray_status"],
+            "description": "0=Pause, 1=Tray Only, 2=Always On",
+        }
+        raw["startup"] = {
+            "value": settings["startup"],
+            "description": "0=Off, 1=On",
+        }
+        raw["alternate_hotkey"] = {
+            "value": settings["alternate_hotkey"],
+            "description": "Hotkey to trigger snip (e.g., 'ralt+rctrl+s')",
+        }
+        with open(SETTINGS_PATH, "w") as f:
+            json.dump(raw, f, indent=4)
+    except Exception as e:
+        print("Failed to save settings:", e)
 
 
-def set_startup(enabled: bool) -> None:
-    if enabled:
-        AUTOSTART_DIR.mkdir(parents=True, exist_ok=True)
-        setup_path = os.path.abspath(SETUP_LINUX_SH)
-        desktop = (
+def create_autostart_entry():
+    """Create a .desktop autostart entry for Snipping Lens."""
+    try:
+        os.makedirs(AUTOSTART_DIR, exist_ok=True)
+        content = (
             "[Desktop Entry]\n"
             "Type=Application\n"
-            f"Exec=bash -lc '\"{setup_path}\"'\n"
-            "Terminal=false\n"
+            f'Exec=bash -c "{SETUP_SCRIPT}"\n'
             "Hidden=false\n"
             "NoDisplay=false\n"
             "X-GNOME-Autostart-enabled=true\n"
-            "Name=Start Snipping Lens\n"
+            "Name=Snipping Lens\n"
         )
-        AUTOSTART_DESKTOP.write_text(desktop, encoding="utf-8")
-        logging.info("Autostart enabled: %s", AUTOSTART_DESKTOP)
-    else:
-        try:
-            if AUTOSTART_DESKTOP.exists():
-                AUTOSTART_DESKTOP.unlink()
-                logging.info("Autostart disabled: %s", AUTOSTART_DESKTOP)
-        except Exception:
-            logging.info("Failed to remove autostart entry: %s", AUTOSTART_DESKTOP)
+        with open(DESKTOP_FILE, "w") as f:
+            f.write(content)
+        logging.info("Snipping Lens added to autostart.")
+    except Exception as e:
+        logging.error(f"Error adding Snipping Lens to autostart: {e}")
 
 
-async def main(page: ft.Page):
+def remove_autostart_entry():
+    """Remove the .desktop autostart entry for Snipping Lens."""
+    try:
+        if os.path.exists(DESKTOP_FILE):
+            os.remove(DESKTOP_FILE)
+            logging.info("Snipping Lens removed from autostart.")
+    except Exception as e:
+        logging.error(f"Error removing Snipping Lens from autostart: {e}")
+
+
+def main(page: ft.Page):
     settings = load_settings()
-
     page.title = "Snipping Lens"
-    page.window.icon = os.path.abspath(ICON_PATH)
     page.window.width = 700
     page.window.height = 550
     page.window.min_width = 700
     page.window.min_height = 550
-    await page.window.center()
+    page.window.center()
     page.horizontal_alignment = "center"
     page.vertical_alignment = "center"
 
@@ -109,19 +166,19 @@ async def main(page: ft.Page):
         page.update()
 
     status_toggle = ft.CupertinoSlidingSegmentedButton(
-        selected_index=int(settings.get("tray_status", 2)),
-        thumb_color=status_color_map[int(settings.get("tray_status", 2))],
+        selected_index=settings["tray_status"],
+        thumb_color=status_color_map[settings["tray_status"]],
         on_change=on_status_toggle,
-        padding=ft.Padding.symmetric(vertical=0, horizontal=10),
+        padding=ft.padding.symmetric(0, 10),
         controls=[
-            ft.Text("Pause", tooltip="Disable snipping and hotkeys."),
+            ft.Text("Pause", tooltip="Disable all features."),
             ft.Text(
                 "Tray Only",
-                tooltip="Snip only from the tray/menu (hotkey disabled).",
+                tooltip="Trigger Google Lens searches only if snip is launched from the tray.",
             ),
             ft.Text(
                 "Always On",
-                tooltip="Snip from tray/menu or the global hotkey.",
+                tooltip="Trigger Google Lens searches regardless of where snip is launched from.",
             ),
         ],
     )
@@ -133,14 +190,18 @@ async def main(page: ft.Page):
         startup_toggle.selected_index = idx
         startup_toggle.thumb_color = startup_color_map[idx]
 
-        set_startup(idx == 1)
+        if idx == 1:
+            create_autostart_entry()
+        else:
+            remove_autostart_entry()
+
         page.update()
 
     startup_toggle = ft.CupertinoSlidingSegmentedButton(
-        selected_index=int(settings.get("startup", 0)),
-        thumb_color=startup_color_map[int(settings.get("startup", 0))],
+        selected_index=settings["startup"],
+        thumb_color=startup_color_map[settings["startup"]],
         on_change=on_startup_toggle,
-        padding=ft.Padding.symmetric(vertical=0, horizontal=10),
+        padding=ft.padding.symmetric(0, 10),
         controls=[
             ft.Text("Off"),
             ft.Text("On"),
@@ -149,61 +210,51 @@ async def main(page: ft.Page):
 
     # State for hotkey capture
     is_capturing_hotkey = [False]
-    captured_keys: list[str] = []
+    captured_keys = []
 
-    def format_hotkey_display(keys: list[str]) -> str:
+    def format_hotkey_display(keys):
         if not keys:
             return ""
 
+        # Separate modifiers and regular keys, preserving left/right distinction
         modifiers = []
         regular_keys = []
 
+        modifier_names = {
+            "lctrl", "rctrl", "lalt", "ralt", "lshift", "rshift",
+            "lwin", "rwin", "ctrl", "alt", "shift", "win",
+        }
+
         for key in keys:
-            k = key.lower()
-            if k in [
-                "ctrl",
-                "alt",
-                "shift",
-                "win",
-                "cmd",
-                "meta",
-                "super",
-                "rctrl",
-                "ralt",
-                "lctrl",
-                "lalt",
-            ]:
-                modifiers.append(k)
+            if key.lower() in modifier_names:
+                modifiers.append(key.lower())
             else:
-                regular_keys.append(k)
+                regular_keys.append(key.lower())
 
         modifiers = sorted(list(set(modifiers)))
         regular_keys = sorted(list(set(regular_keys)))
-        return "+".join(modifiers + regular_keys)
 
-    def save_captured_hotkey() -> None:
+        all_keys = modifiers + regular_keys
+        return "+".join(all_keys)
+
+    def save_captured_hotkey():
         hotkey_str = format_hotkey_display(captured_keys)
-        save_hotkey_value(hotkey_str)
+        settings["alternate_hotkey"] = hotkey_str
+        save_settings(settings)
         hotkey_field.value = hotkey_str if hotkey_str else ""
-        hotkey_field.helper = "Click to capture new hotkey."
+        hotkey_field.helper_text = "Click to capture new hotkey."
         is_capturing_hotkey[0] = False
         captured_keys.clear()
         page.update()
-        logging.info("Hotkey updated to: '%s'", hotkey_str)
+        logging.info(f"Hotkey updated to: '{hotkey_str}'")
 
     def on_hotkey_field_click(e):
         if not is_capturing_hotkey[0]:
             is_capturing_hotkey[0] = True
             captured_keys.clear()
             hotkey_field.value = "Recording keys..."
-            hotkey_field.helper = "Press ENTER to save, and ESC to clear."
+            hotkey_field.helper_text = "Press ENTER to save, and ESC to cancel."
             page.update()
-
-    def save_hotkey_value(value: str) -> None:
-        hotkey_str = str(value or "").strip()
-        settings["alternate_hotkey"] = hotkey_str
-        save_settings(settings)
-        logging.info("Hotkey updated to: '%s'", hotkey_str)
 
     def on_key_down(e):
         try:
@@ -214,7 +265,7 @@ async def main(page: ft.Page):
                 settings["alternate_hotkey"] = ""
                 save_settings(settings)
                 hotkey_field.value = ""
-                hotkey_field.helper = "Hotkey cleared. Click to capture new hotkey."
+                hotkey_field.helper_text = "Hotkey cleared. Click to capture new hotkey."
                 is_capturing_hotkey[0] = False
                 captured_keys.clear()
                 page.update()
@@ -225,32 +276,56 @@ async def main(page: ft.Page):
                 save_captured_hotkey()
                 return
 
-            current_keys: list[str] = []
+            current_keys = []
 
-            # Modifier states (Flet may not expose left/right consistently).
-            try:
-                if hasattr(e, "ctrl") and e.ctrl:
-                    current_keys.append("ctrl")
-            except Exception:
-                pass
-            try:
-                if hasattr(e, "alt") and e.alt:
-                    current_keys.append("alt")
-            except Exception:
-                pass
-            try:
-                if hasattr(e, "shift") and e.shift:
-                    current_keys.append("shift")
-            except Exception:
-                pass
-            try:
-                if hasattr(e, "meta") and e.meta:
-                    current_keys.append("super")
-            except Exception:
-                pass
+            # Check modifier states with left/right distinction
+            # Flet's on_keyboard_event gives us e.ctrl, e.alt, e.shift, e.meta
+            # but unfortunately doesn't natively distinguish left/right in the
+            # boolean properties. We use e.key to detect the specific modifier.
 
+            # Build the key name for left/right detection
             key_name = str(e.key).lower() if hasattr(e, "key") and e.key else ""
-            if key_name and key_name not in ["control", "alt", "shift", "meta", "cmd"]:
+
+            # Check if the pressed key itself is a modifier with left/right info
+            # Flet reports keys like "Control Left", "Alt Right", etc.
+            combined = key_name
+            if combined in MODIFIER_KEYS:
+                current_keys.append(MODIFIER_KEYS[combined])
+            elif key_name in GENERIC_MODIFIER_NAMES:
+                # Generic modifier without side info
+                pass
+            else:
+                # It's a regular key; add active modifiers
+                try:
+                    if hasattr(e, "ctrl") and e.ctrl:
+                        # If we already have a specific l/r ctrl from a previous capture, keep it
+                        if not any(k in captured_keys for k in ["lctrl", "rctrl"]):
+                            current_keys.append("ctrl")
+                except Exception:
+                    pass
+
+                try:
+                    if hasattr(e, "alt") and e.alt:
+                        if not any(k in captured_keys for k in ["lalt", "ralt"]):
+                            current_keys.append("alt")
+                except Exception:
+                    pass
+
+                try:
+                    if hasattr(e, "shift") and e.shift:
+                        if not any(k in captured_keys for k in ["lshift", "rshift"]):
+                            current_keys.append("shift")
+                except Exception:
+                    pass
+
+                try:
+                    if hasattr(e, "meta") and e.meta:
+                        if not any(k in captured_keys for k in ["lwin", "rwin"]):
+                            current_keys.append("win")
+                except Exception:
+                    pass
+
+                # Add the regular key
                 key_mapping = {
                     "arrowup": "up",
                     "arrowdown": "down",
@@ -259,42 +334,52 @@ async def main(page: ft.Page):
                     " ": "space",
                     "delete": "del",
                 }
-                current_keys.append(key_mapping.get(key_name, key_name))
+                mapped_key = key_mapping.get(key_name, key_name)
+                if mapped_key:
+                    current_keys.append(mapped_key)
 
-            captured_keys.clear()
-            captured_keys.extend(current_keys)
+            # Accumulate modifier keys across presses, but replace regular keys
+            if current_keys:
+                modifier_set = {
+                    "lctrl", "rctrl", "lalt", "ralt", "lshift", "rshift",
+                    "lwin", "rwin", "ctrl", "alt", "shift", "win",
+                }
+                new_mods = [k for k in current_keys if k in modifier_set]
+                new_regulars = [k for k in current_keys if k not in modifier_set]
 
-            hotkey_field.value = (
-                format_hotkey_display(captured_keys) or "Recording keys..."
-            )
+                # Keep previously captured modifiers, add new ones
+                existing_mods = [k for k in captured_keys if k in modifier_set]
+                for m in new_mods:
+                    if m not in existing_mods:
+                        existing_mods.append(m)
+
+                captured_keys.clear()
+                captured_keys.extend(existing_mods)
+                captured_keys.extend(new_regulars)
+
+            if captured_keys:
+                current_display = format_hotkey_display(captured_keys)
+                hotkey_field.value = current_display
+            else:
+                hotkey_field.value = "Recording keys..."
             page.update()
 
         except Exception as ex:
-            logging.error("Error in hotkey capture: %s", ex)
+            logging.error(f"Error in hotkey capture: {ex}")
             hotkey_field.value = "Error capturing keys. Click to try again."
-            hotkey_field.helper = "Click to capture new hotkey."
+            hotkey_field.helper_text = "Click to capture new hotkey."
             is_capturing_hotkey[0] = False
             captured_keys.clear()
             page.update()
 
     hotkey_field = ft.TextField(
         hint_text="Click to capture hotkey",
-        value=str(settings.get("alternate_hotkey", "")).strip(),
+        value=settings["alternate_hotkey"],
         read_only=True,
         on_click=on_hotkey_field_click,
-        on_blur=lambda e: (
-            None
-            if is_capturing_hotkey[0]
-            else save_hotkey_value(hotkey_field.value)
-        ),
-        on_submit=lambda e: (
-            None
-            if is_capturing_hotkey[0]
-            else save_hotkey_value(hotkey_field.value)
-        ),
-        width=320,
+        width=300,
         border=ft.InputBorder.OUTLINE,
-        helper="Click to capture new hotkey.",
+        helper_text="Click to capture new hotkey.",
     )
 
     log_field = ft.TextField(
@@ -307,7 +392,7 @@ async def main(page: ft.Page):
         expand=True,
         autofocus=False,
         border=ft.InputBorder.OUTLINE,
-        text_style=ft.TextStyle(size=13, font_family="Consolas"),
+        text_style=ft.TextStyle(size=13, font_family="monospace"),
     )
 
     page.add(
@@ -343,19 +428,14 @@ async def main(page: ft.Page):
                         ft.Column(
                             [
                                 ft.Text(
-                                    "Global Snip Hotkey (X11)",
+                                    "Snip Hotkey",
                                     size=18,
                                     weight=ft.FontWeight.BOLD,
                                 ),
                                 hotkey_field,
-                                ft.Text(
-                                    "Tip: You can type right-side modifiers as 'rctrl' and 'ralt' (e.g. rctrl+ralt+s).",
-                                    size=12,
-                                    color="#b0b0b0",
-                                ),
                             ],
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        )
+                        ),
                     ],
                     alignment=ft.MainAxisAlignment.CENTER,
                 ),
@@ -389,18 +469,17 @@ async def main(page: ft.Page):
     try:
         page.on_keyboard_event = on_key_down
     except Exception as e:
-        logging.warning("Could not set keyboard event handler: %s", e)
+        logging.warning(f"Could not set keyboard event handler: {e}")
         hotkey_field.read_only = False
-        hotkey_field.helper = "Type hotkey manually (e.g., rctrl+ralt+s)."
+        hotkey_field.helper_text = (
+            "Type hotkey manually (e.g., ralt+rctrl+s) or click to try capture mode."
+        )
 
     page.run_task(poll_log)
 
 
 write_pid_lock()
-atexit.register(remove_lock)
-signal.signal(signal.SIGTERM, signal_handler)
-signal.signal(signal.SIGINT, signal_handler)
 try:
-    ft.run(main, assets_dir=None)
+    ft.app(target=main)
 finally:
     remove_lock()
