@@ -177,6 +177,7 @@ cython_debug/
 *.log
 *.json
 *WPy64-310111/
+*MsPy-3_11_14
 *.venv/
 *.exe
 *.zip
