@@ -122,7 +122,7 @@ def get_tray_status():
 
 
 def get_alternate_hotkey():
-    val = get_setting_value("alternate_hotkey", "ralt+rctrl+s")
+    val = get_setting_value("alternate_hotkey", "alt+ctrl+\\")
     return str(val).strip() if val else ""
 
 
@@ -172,8 +172,8 @@ try:
 
     if "alternate_hotkey" not in raw:
         raw["alternate_hotkey"] = {
-            "value": "ralt+rctrl+s",
-            "description": "Hotkey to trigger snip (e.g., 'ralt+rctrl+s')",
+            "value": "alt+ctrl+\\",
+            "description": "Hotkey to trigger snip (e.g., 'alt+ctrl+\\\\')",
         }
 
     if "tray_status" not in raw:
@@ -184,6 +184,12 @@ try:
 
     if "startup" not in raw:
         raw["startup"] = {
+            "value": 0,
+            "description": "0=Off, 1=On",
+        }
+
+    if "app_menu" not in raw:
+        raw["app_menu"] = {
             "value": 0,
             "description": "0=Off, 1=On",
         }
@@ -282,22 +288,9 @@ def is_tray_running():
     return False
 
 
-def _find_system_python():
-    """Find the real system python3, not a venv one."""
-    for path in ["/usr/bin/python3", "/usr/bin/python"]:
-        if os.path.exists(path):
-            return path
-    return "python3"
-
-
-SYSTEM_PYTHON = _find_system_python()
-
-
 def launch_tray():
-    # sniplens.py uses gi (AppIndicator3/Gtk) which requires the system Python
-    # (the compiled _gi.so is ABI-locked to the system Python version).
     tray_path = os.path.join(EXE_DIR, "sniplens.py")
-    subprocess.Popen([SYSTEM_PYTHON, tray_path])
+    subprocess.Popen([sys.executable, tray_path])
 
 
 def kill_tray():

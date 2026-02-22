@@ -31,11 +31,6 @@ LOCKFILE = os.path.join(EXE_DIR, ".sniplens.lock")
 LOG_FILE = os.path.abspath(os.path.join(EXE_DIR, "..", "logs", "sniplens.log"))
 ICON_PATH = os.path.abspath(os.path.join(EXE_DIR, "..", "assets", "sniplens.png"))
 
-# Path to the venv Python (used to launch config_window.py which needs venv deps)
-VENV_PYTHON = os.path.abspath(
-    os.path.join(EXE_DIR, "..", "..", "..", "int", "linux", "venv", "bin", "python")
-)
-
 
 def _read_pid(path):
     """Read a PID from a lockfile and check if it's alive."""
@@ -130,10 +125,8 @@ def open_config_window():
         except OSError:
             pass
 
-    # Use the venv Python for config_window (it needs flet and other pip deps)
-    python = VENV_PYTHON if os.path.exists(VENV_PYTHON) else sys.executable
     logging.info("Launching Snipping Lens config window.")
-    subprocess.Popen([python, os.path.join(EXE_DIR, "config_window.py")])
+    subprocess.Popen([sys.executable, os.path.join(EXE_DIR, "config_window.py")])
 
 
 def trigger_snip(_=None):

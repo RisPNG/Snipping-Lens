@@ -1,5 +1,6 @@
 flet==0.28.3
 psutil==7.0.0
+PyGObject==3.50.0
 requests==2.32.4
 watchdog==6.0.0
 pynput==1.8.1

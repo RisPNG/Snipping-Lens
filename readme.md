@@ -45,12 +45,25 @@ Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the lates
 - Use Win+Shift+S, or left-click the tray icon.
 - Screenshots are automatically detected and opened in Google Lens.
 
+**Linux (X11):**
+
+- Use the configured hotkey (default: Alt + Ctrl + \\), or click "Snip" from the tray icon.
+- A region selection overlay appears (via `maim`). Select a region and it opens in Google Lens.
+
 ### Tray Icon Actions
 
 - **Left-click**: Takes a screenshot according to the system's snipping tool or equivalent.
 - **Right-click**: Show context menu with options:
+  - **Snip**: Takes a screenshot (Linux).
   - **Open App**: Opens Snipping Lens main window.
   - **Exit**: Close the application.
+
+### Settings (Linux)
+
+- **Activation Mode**: Pause (disabled), Tray Only (snip only from tray), Always On (hotkey + tray).
+- **Startup**: Toggle autostart on login via XDG autostart.
+- **App Menu**: Add/remove Snipping Lens from the desktop app menu.
+- **Snip Hotkey**: Configurable hotkey with left/right modifier key distinction.
 
 ## Requirements
 
@@ -59,6 +72,14 @@ Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the lates
 ### Windows
 
 - Windows 10 or later.
+
+### Linux
+
+- X11 display server.
+- `maim` (screenshot tool).
+- System packages for building PyGObject: C compiler, pkg-config, GObject Introspection dev headers, Cairo dev headers.
+- GTK3 and AppIndicator3 (or AyatanaAppIndicator3) GIR typelibs for the system tray.
+- The setup script (`setup_linux.sh`) checks for missing dependencies and tells you what to install.
 
 ## FAQ
 
@@ -78,7 +99,9 @@ As long as Litterbox returns the expected response (a direct image URL) and as l
 
 ## Building from Source
 
-For Windows: `setup_win.vbs` already builds the application from source using its own Python 3.10 environment. If you want to use your own Python environment, you need to adjust the path inside the scripts in the bin/win folder.
+**Windows:** `setup_win.vbs` already builds the application from source using its own Python 3.10 environment. If you want to use your own Python environment, you need to adjust the path inside the scripts in the bin/win folder.
+
+**Linux:** `setup_linux.sh` downloads its own Python 3.11 environment, creates a virtual environment, installs dependencies, and runs the application. Enable the app menu option to run it from the app menu without the terminal.
 
 ## Support and Contributing
 

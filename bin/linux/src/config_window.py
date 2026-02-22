@@ -19,6 +19,9 @@ LOG_FILE = os.path.abspath(os.path.join(EXE_DIR, "..", "logs", "sniplens.log"))
 SETUP_SCRIPT = os.path.abspath(os.path.join(EXE_DIR, "..", "..", "..", "setup_linux.sh"))
 AUTOSTART_DIR = os.path.expanduser("~/.config/autostart")
 DESKTOP_FILE = os.path.join(AUTOSTART_DIR, "snipping-lens-startup.desktop")
+APPLICATIONS_DIR = os.path.expanduser("~/.local/share/applications")
+APP_MENU_FILE = os.path.join(APPLICATIONS_DIR, "snipping-lens.desktop")
+ICON_PATH = os.path.abspath(os.path.join(EXE_DIR, "..", "assets", "sniplens.png"))
 
 logging.basicConfig(
     filename=LOG_FILE,
@@ -70,12 +73,14 @@ def load_settings():
         return {
             "tray_status": val("tray_status", 2),
             "startup": val("startup", 0),
+            "app_menu": val("app_menu", 0),
             "alternate_hotkey": val("alternate_hotkey", "alt+ctrl+\\"),
         }
     except Exception:
         return {
             "tray_status": 2,
             "startup": 0,
+            "app_menu": 0,
             "alternate_hotkey": "alt+ctrl+\\",
         }
 
@@ -95,6 +100,10 @@ def save_settings(settings):
             "value": settings["startup"],
             "description": "0=Off, 1=On",
         }
+        raw["app_menu"] = {
+            "value": settings["app_menu"],
+            "description": "0=Off, 1=On",
+        }
         raw["alternate_hotkey"] = {
             "value": settings["alternate_hotkey"],
             "description": "Hotkey to trigger snip (e.g., 'ralt+rctrl+s')",
@@ -112,7 +121,8 @@ def create_autostart_entry():
         content = (
             "[Desktop Entry]\n"
             "Type=Application\n"
-            f'Exec=bash -c "{SETUP_SCRIPT}"\n'
+            f'Exec=bash -c "{SETUP_SCRIPT} --hidden"\n'
+            "Terminal=false\n"
             "Hidden=false\n"
             "NoDisplay=false\n"
             "X-GNOME-Autostart-enabled=true\n"
@@ -133,6 +143,37 @@ def remove_autostart_entry():
             logging.info("Snipping Lens removed from autostart.")
     except Exception as e:
         logging.error(f"Error removing Snipping Lens from autostart: {e}")
+
+
+def create_app_menu_entry():
+    """Create a .desktop entry in ~/.local/share/applications/ for the app menu."""
+    try:
+        os.makedirs(APPLICATIONS_DIR, exist_ok=True)
+        content = (
+            "[Desktop Entry]\n"
+            "Type=Application\n"
+            f'Exec=bash -c "{SETUP_SCRIPT} --hidden"\n'
+            "Terminal=false\n"
+            f"Icon={ICON_PATH}\n"
+            "Name=Snipping Lens\n"
+            "Comment=Screenshot to Google Lens\n"
+            "Categories=Utility;\n"
+        )
+        with open(APP_MENU_FILE, "w") as f:
+            f.write(content)
+        logging.info("Snipping Lens added to app menu.")
+    except Exception as e:
+        logging.error(f"Error adding Snipping Lens to app menu: {e}")
+
+
+def remove_app_menu_entry():
+    """Remove the .desktop entry from ~/.local/share/applications/."""
+    try:
+        if os.path.exists(APP_MENU_FILE):
+            os.remove(APP_MENU_FILE)
+            logging.info("Snipping Lens removed from app menu.")
+    except Exception as e:
+        logging.error(f"Error removing Snipping Lens from app menu: {e}")
 
 
 def main(page: ft.Page):
@@ -201,6 +242,31 @@ def main(page: ft.Page):
         selected_index=settings["startup"],
         thumb_color=startup_color_map[settings["startup"]],
         on_change=on_startup_toggle,
+        padding=ft.padding.symmetric(0, 10),
+        controls=[
+            ft.Text("Off"),
+            ft.Text("On"),
+        ],
+    )
+
+    def on_app_menu_toggle(e):
+        idx = int(e.data)
+        settings["app_menu"] = idx
+        save_settings(settings)
+        app_menu_toggle.selected_index = idx
+        app_menu_toggle.thumb_color = startup_color_map[idx]
+
+        if idx == 1:
+            create_app_menu_entry()
+        else:
+            remove_app_menu_entry()
+
+        page.update()
+
+    app_menu_toggle = ft.CupertinoSlidingSegmentedButton(
+        selected_index=settings["app_menu"],
+        thumb_color=startup_color_map[settings["app_menu"]],
+        on_change=on_app_menu_toggle,
         padding=ft.padding.symmetric(0, 10),
         controls=[
             ft.Text("Off"),
@@ -415,6 +481,13 @@ def main(page: ft.Page):
                             [
                                 ft.Text("Startup", size=22, weight=ft.FontWeight.BOLD),
                                 startup_toggle,
+                            ],
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        ),
+                        ft.Column(
+                            [
+                                ft.Text("App Menu", size=22, weight=ft.FontWeight.BOLD),
+                                app_menu_toggle,
                             ],
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                         ),
