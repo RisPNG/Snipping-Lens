@@ -138,8 +138,9 @@ jobs:
 
             ### Linux
             1. Download and extract `SnippingLens-Linux.zip`.
-            2. Run `./setup_linux.sh` — it will check dependencies, set up the environment, and start the app.
+            2. Run `./setup_linux.sh` to start the application but this will show a terminal.
             3. Use the config window (tray > Open App) to enable Startup and App Menu entries.
+            4. Run through the App Menu entry to run Snipping Lens without showing a terminal, this is already by default for Startup option.
           draft: false
           prerelease: ${{ steps.extract_release_info.outputs.prerelease }}
 
