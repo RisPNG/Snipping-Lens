@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-HIDDEN=true
+HIDDEN=false
 if [[ "${1:-}" == "--hidden" ]]; then
     HIDDEN=true
 fi
@@ -116,11 +116,21 @@ check_system_deps() {
         missing_pacman+=("libappindicator-gtk3")
     fi
 
-    if ! command -v maim >/dev/null 2>&1; then
-        missing_generic+=("maim (screenshot tool)")
-        missing_apt+=("maim")
-        missing_dnf+=("maim")
-        missing_pacman+=("maim")
+    local DESKTOP_ENV="${XDG_CURRENT_DESKTOP:-}"
+    if [[ "${DESKTOP_ENV^^}" == *"GNOME"* ]]; then
+        if ! command -v gnome-screenshot >/dev/null 2>&1; then
+            missing_generic+=("gnome-screenshot (screenshot tool for GNOME)")
+            missing_apt+=("gnome-screenshot")
+            missing_dnf+=("gnome-screenshot")
+            missing_pacman+=("gnome-screenshot")
+        fi
+    else
+        if ! command -v maim >/dev/null 2>&1; then
+            missing_generic+=("maim (screenshot tool)")
+            missing_apt+=("maim")
+            missing_dnf+=("maim")
+            missing_pacman+=("maim")
+        fi
     fi
 
     if [ ${#missing_generic[@]} -gt 0 ]; then

@@ -39,6 +39,82 @@ LITTERBOX_API = "https://litterbox.catbox.moe/resources/internals/api.php"
 GOOGLE_LENS_URL = "https://lens.google.com/uploadbyurl?url={}"
 
 
+def is_gnome_desktop():
+    desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").strip()
+    if not desktop:
+        return False
+    # XDG_CURRENT_DESKTOP is often colon-separated e.g. "ubuntu:GNOME"
+    parts = [
+        part.strip().upper()
+        for part in desktop.replace(";", ":").split(":")
+        if part.strip()
+    ]
+    return "GNOME" in parts
+
+
+def upload_to_litterbox_requests(image_path: str):
+    try:
+        with open(image_path, "rb") as f:
+            files = {
+                "reqtype": (None, "fileupload"),
+                "time": (None, "1h"),
+                "fileToUpload": ("snip.png", f, "image/png"),
+            }
+            response = requests.post(LITTERBOX_API, files=files, timeout=30)
+
+        if response.status_code == 200:
+            return response.text.strip()
+
+        logging.error(
+            f"[Litterbox] Upload failed with status: {response.status_code}"
+        )
+        return None
+    except Exception as e:
+        logging.error(f"[Litterbox] Upload error: {e}")
+        return None
+
+
+def upload_to_litterbox_curl(image_path: str):
+    try:
+        result = subprocess.run(
+            [
+                "curl",
+                "-sS",
+                "-F",
+                "reqtype=fileupload",
+                "-F",
+                "time=1h",
+                "-F",
+                f"fileToUpload=@{image_path}",
+                LITTERBOX_API,
+            ],
+            timeout=30,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        logging.error("[Litterbox] curl is not installed. Falling back to requests.")
+        return upload_to_litterbox_requests(image_path)
+    except subprocess.TimeoutExpired:
+        logging.error("[Litterbox] curl upload timed out (30s).")
+        return None
+
+    if result.returncode != 0:
+        stderr = (result.stderr or "").strip()
+        logging.error(
+            "[Litterbox] curl upload failed (exit code %d). %s",
+            result.returncode,
+            stderr,
+        )
+        return None
+
+    url = (result.stdout or "").strip()
+    if not url:
+        logging.error("[Litterbox] curl upload returned an empty response.")
+        return None
+    return url
+
+
 def singleton_lock():
     if os.path.exists(LOCKFILE):
         try:
@@ -204,7 +280,7 @@ except Exception as e:
 
 
 def do_snip(from_tray=False):
-    """Run maim to select a region, upload to Litterbox, and open Google Lens."""
+    """Capture a region screenshot, upload to Litterbox, and open Google Lens."""
     tray_status = get_tray_status()
 
     if tray_status == 0:
@@ -215,53 +291,65 @@ def do_snip(from_tray=False):
         logging.info("[Snip] Tray Only mode but snip not from tray. Skipping.")
         return
 
-    logging.info("[Snip] Launching maim for region selection...")
+    use_gnome = is_gnome_desktop()
+    if use_gnome:
+        logging.info(
+            "[Snip] Detected GNOME via XDG_CURRENT_DESKTOP; using gnome-screenshot."
+        )
+    else:
+        logging.info("[Snip] Using maim for region selection...")
 
     try:
-        result = subprocess.run(
-            ["maim", "-s", SCREENSHOT_PATH],
-            timeout=120,
-        )
+        if use_gnome:
+            result = subprocess.run(
+                ["gnome-screenshot", "-a", "-f", SCREENSHOT_PATH],
+                timeout=120,
+            )
+        else:
+            result = subprocess.run(
+                ["maim", "-s", SCREENSHOT_PATH],
+                timeout=120,
+            )
     except FileNotFoundError:
-        logging.error("[Snip] maim is not installed. Please install maim.")
+        if use_gnome:
+            logging.error(
+                "[Snip] gnome-screenshot is not installed. Please install gnome-screenshot."
+            )
+        else:
+            logging.error("[Snip] maim is not installed. Please install maim.")
         return
     except subprocess.TimeoutExpired:
-        logging.error("[Snip] maim timed out (120s). Skipping.")
+        logging.error("[Snip] Screenshot selection timed out (120s). Skipping.")
         return
 
     if result.returncode != 0:
-        logging.info("[Snip] maim cancelled or failed (exit code %d).", result.returncode)
+        logging.info(
+            "[Snip] Screenshot cancelled or failed (exit code %d).",
+            result.returncode,
+        )
         return
 
     if not os.path.exists(SCREENSHOT_PATH):
-        logging.error("[Snip] Screenshot file not found after maim.")
+        logging.error("[Snip] Screenshot file not found after capture.")
         return
 
     # Upload to Litterbox
     logging.info("[Litterbox] Uploading image...")
     try:
-        with open(SCREENSHOT_PATH, "rb") as f:
-            files = {
-                "reqtype": (None, "fileupload"),
-                "time": (None, "1h"),
-                "fileToUpload": ("snip.png", f, "image/png"),
-            }
-            response = requests.post(LITTERBOX_API, files=files, timeout=30)
-
-        if response.status_code == 200:
-            url = response.text.strip()
-            logging.info(f"[Litterbox] Upload success: {url}")
-            update_settings({"last_litterbox_url": url})
-
-            lens_url = GOOGLE_LENS_URL.format(url)
-            logging.info(f"[Google Lens] Opening: {lens_url}")
-            webbrowser.open_new_tab(lens_url)
+        if use_gnome:
+            url = upload_to_litterbox_curl(SCREENSHOT_PATH)
         else:
-            logging.error(
-                f"[Litterbox] Upload failed with status: {response.status_code}"
-            )
-    except Exception as e:
-        logging.error(f"[Litterbox] Upload error: {e}")
+            url = upload_to_litterbox_requests(SCREENSHOT_PATH)
+
+        if not url:
+            return
+
+        logging.info(f"[Litterbox] Upload success: {url}")
+        update_settings({"last_litterbox_url": url})
+
+        lens_url = GOOGLE_LENS_URL.format(url)
+        logging.info(f"[Google Lens] Opening: {lens_url}")
+        webbrowser.open_new_tab(lens_url)
     finally:
         # Clean up screenshot
         try:

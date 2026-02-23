@@ -75,8 +75,8 @@ Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the lates
 
 ### Linux
 
-- X11 display server.
-- `maim` (screenshot tool).
+- X11 display server (required for `maim` capture on non-GNOME desktops).
+- `maim` (screenshot tool) **or** `gnome-screenshot` when running GNOME (`XDG_CURRENT_DESKTOP` contains `GNOME`).
 - System packages for building PyGObject: C compiler, pkg-config, GObject Introspection dev headers, Cairo dev headers.
 - GTK3 and AppIndicator3 (or AyatanaAppIndicator3) GIR typelibs for the system tray.
 - The setup script (`setup_linux.sh`) checks for missing dependencies and tells you what to install.
