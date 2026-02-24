@@ -68,7 +68,7 @@ Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the lates
 
 ### Linux
 
-- `gnome-screenshot` on GNOME / `spectacle` on KDE / `maim` for other X11-based DE / `slurp` for Wayland.
+- `gnome-screenshot` on GNOME / `spectacle` on KDE / `maim` for other X11-based DE.
 - The setup script (`setup_linux.sh`) checks for missing dependencies and tells you what to install.
 
 ## FAQ
