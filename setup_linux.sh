@@ -132,11 +132,21 @@ check_system_deps() {
             missing_pacman+=("spectacle")
         fi
     else
-        if ! command -v maim >/dev/null 2>&1; then
-            missing_generic+=("maim (screenshot tool)")
-            missing_apt+=("maim")
-            missing_dnf+=("maim")
-            missing_pacman+=("maim")
+        local SESSION_TYPE="${XDG_SESSION_TYPE:-}"
+        if [[ "${SESSION_TYPE,,}" == "wayland" || -n "${WAYLAND_DISPLAY:-}" ]]; then
+            if ! command -v wayshot >/dev/null 2>&1; then
+                missing_generic+=("wayshot (screenshot tool for Wayland)")
+                missing_apt+=("wayshot")
+                missing_dnf+=("wayshot")
+                missing_pacman+=("wayshot")
+            fi
+        else
+            if ! command -v maim >/dev/null 2>&1; then
+                missing_generic+=("maim (screenshot tool for X11)")
+                missing_apt+=("maim")
+                missing_dnf+=("maim")
+                missing_pacman+=("maim")
+            fi
         fi
     fi
 

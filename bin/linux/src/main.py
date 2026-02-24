@@ -33,7 +33,7 @@ SETTINGS_PATH = os.path.abspath(
 )
 LOCKFILE = os.path.join(EXE_DIR, ".tray_watchdog.lock")
 LOG_FILE = os.path.abspath(os.path.join(EXE_DIR, "..", "logs", "sniplens.log"))
-SCREENSHOT_PATH = "/tmp/sniplens_screenshot.png"
+SCREENSHOT_PATH = "/tmp/screenshot.png"
 
 LITTERBOX_API = "https://litterbox.catbox.moe/resources/internals/api.php"
 GOOGLE_LENS_URL = "https://lens.google.com/uploadbyurl?url={}"
@@ -65,6 +65,17 @@ def is_kde_desktop():
     return "KDE" in parts
 
 
+def get_session_type():
+    session_type = os.environ.get("XDG_SESSION_TYPE", "").strip().lower()
+    if session_type in {"wayland", "x11"}:
+        return session_type
+    if os.environ.get("WAYLAND_DISPLAY", "").strip():
+        return "wayland"
+    if os.environ.get("DISPLAY", "").strip():
+        return "x11"
+    return ""
+
+
 def upload_to_litterbox_requests(image_path: str):
     try:
         with open(image_path, "rb") as f:
@@ -74,6 +85,27 @@ def upload_to_litterbox_requests(image_path: str):
                 "fileToUpload": ("snip.png", f, "image/png"),
             }
             response = requests.post(LITTERBOX_API, files=files, timeout=30)
+
+        if response.status_code == 200:
+            return response.text.strip()
+
+        logging.error(
+            f"[Litterbox] Upload failed with status: {response.status_code}"
+        )
+        return None
+    except Exception as e:
+        logging.error(f"[Litterbox] Upload error: {e}")
+        return None
+
+
+def upload_to_litterbox_requests_bytes(image_bytes: bytes):
+    try:
+        files = {
+            "reqtype": (None, "fileupload"),
+            "time": (None, "1h"),
+            "fileToUpload": ("screenshot.png", image_bytes, "image/png"),
+        }
+        response = requests.post(LITTERBOX_API, files=files, timeout=30)
 
         if response.status_code == 200:
             return response.text.strip()
@@ -122,6 +154,47 @@ def upload_to_litterbox_curl(image_path: str):
         return None
 
     url = (result.stdout or "").strip()
+    if not url:
+        logging.error("[Litterbox] curl upload returned an empty response.")
+        return None
+    return url
+
+
+def upload_to_litterbox_curl_stdin(image_bytes: bytes):
+    try:
+        result = subprocess.run(
+            [
+                "curl",
+                "-sS",
+                "-F",
+                "reqtype=fileupload",
+                "-F",
+                "time=1h",
+                "-F",
+                "fileToUpload=@-",
+                LITTERBOX_API,
+            ],
+            input=image_bytes,
+            timeout=30,
+            capture_output=True,
+        )
+    except FileNotFoundError:
+        logging.error("[Litterbox] curl is not installed. Falling back to requests.")
+        return upload_to_litterbox_requests_bytes(image_bytes)
+    except subprocess.TimeoutExpired:
+        logging.error("[Litterbox] curl upload timed out (30s).")
+        return None
+
+    if result.returncode != 0:
+        stderr = (result.stderr or b"").decode("utf-8", errors="replace").strip()
+        logging.error(
+            "[Litterbox] curl upload failed (exit code %d). %s",
+            result.returncode,
+            stderr,
+        )
+        return None
+
+    url = (result.stdout or b"").decode("utf-8", errors="replace").strip()
     if not url:
         logging.error("[Litterbox] curl upload returned an empty response.")
         return None
@@ -306,17 +379,66 @@ def do_snip(from_tray=False):
 
     use_gnome = is_gnome_desktop()
     use_kde = (not use_gnome) and is_kde_desktop()
+    session_type = ""
+    if not use_gnome and not use_kde:
+        session_type = get_session_type()
 
     if use_gnome:
         logging.info(
-            "[Snip] Detected GNOME via XDG_CURRENT_DESKTOP; using gnome-screenshot."
+            "[Snip] Detected GNOME, using gnome-screenshot..."
         )
     elif use_kde:
         logging.info(
-            "[Snip] Detected KDE via XDG_CURRENT_DESKTOP; using spectacle."
+            "[Snip] Detected KDE, using spectacle..."
+        )
+    elif session_type == "wayland":
+        logging.info(
+            "[Snip] Detected Wayland session, using wayshot..."
         )
     else:
-        logging.info("[Snip] Using maim for region selection...")
+        logging.info("[Snip] Detected X11 session, using maim...")
+
+    if session_type == "wayland":
+        try:
+            screenshot = subprocess.run(
+                ["wayshot", "-g", "-"],
+                timeout=120,
+                capture_output=True,
+            )
+        except FileNotFoundError:
+            logging.error(
+                "[Snip] wayshot is not installed. Please install wayshot."
+            )
+            return
+        except subprocess.TimeoutExpired:
+            logging.error("[Snip] Screenshot selection timed out (120s). Skipping.")
+            return
+
+        if screenshot.returncode != 0:
+            logging.info(
+                "[Snip] Screenshot cancelled or failed (exit code %d).",
+                screenshot.returncode,
+            )
+            return
+
+        if not screenshot.stdout:
+            logging.error("[Snip] wayshot returned an empty screenshot.")
+            return
+
+        logging.info("[Litterbox] Uploading image...")
+        url = upload_to_litterbox_curl_stdin(screenshot.stdout)
+        if not url:
+            return
+
+        logging.info(f"[Litterbox] Upload success: {url}")
+        update_settings({"last_litterbox_url": url})
+
+        lens_url = GOOGLE_LENS_URL.format(url)
+        logging.info(f"[Google Lens] Opening: {lens_url}")
+        webbrowser.open_new_tab(lens_url)
+        return
+
+    wrote_file = False
 
     try:
         if use_gnome:
@@ -324,16 +446,19 @@ def do_snip(from_tray=False):
                 ["gnome-screenshot", "-a", "-f", SCREENSHOT_PATH],
                 timeout=120,
             )
+            wrote_file = True
         elif use_kde:
             result = subprocess.run(
                 ["spectacle", "-rbn", "-o", SCREENSHOT_PATH],
                 timeout=120,
             )
+            wrote_file = True
         else:
             result = subprocess.run(
                 ["maim", "-s", SCREENSHOT_PATH],
                 timeout=120,
             )
+            wrote_file = True
     except FileNotFoundError:
         if use_gnome:
             logging.error(
@@ -379,11 +504,11 @@ def do_snip(from_tray=False):
         logging.info(f"[Google Lens] Opening: {lens_url}")
         webbrowser.open_new_tab(lens_url)
     finally:
-        # Clean up screenshot
-        try:
-            os.remove(SCREENSHOT_PATH)
-        except OSError:
-            pass
+        if wrote_file:
+            try:
+                os.remove(SCREENSHOT_PATH)
+            except OSError:
+                pass
 
 
 # --- Tray process management ---
