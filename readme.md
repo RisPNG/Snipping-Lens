@@ -93,11 +93,11 @@ Both `setup_win.vbs` (Windows) and `setup_linux.sh` (Linux) builds the applicati
 
 ## Support and Contributing
 
-If you like this project, please leave a star 🌟, and share it with your friends! Consider donating on [PayPal](https://paypal.me/rispng) to support development.
+If you like this project, please leave a star 🌟, and share it with your friends! Consider donating on [PayPal](https://paypal.me/rispng) to support development. _I will soon do Ko-Fi instead.
 
 If you encounter any issue:
 
-1. Check the [Issues](https://github.com/RisPNG/Snipping-Lens/issues) page if issue has been raised.
+1. Check the [issues page](https://github.com/RisPNG/Snipping-Lens/issues) if issue has been raised.
 2. Create a new issue if necessary and provide in-depth details of the issue including the relevant logs (right-click tray icon > Show Logs).
 
 ## Disclaimer
