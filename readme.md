@@ -45,29 +45,22 @@ Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the lates
 - Use Win+Shift+S, or left-click the tray icon.
 - Screenshots are automatically detected and opened in Google Lens.
 
-**Linux (X11):**
+**Linux:**
 
 - Use the configured hotkey (default: Alt + Ctrl + \\), or click "Snip" from the tray icon.
-- A region selection overlay appears (via `maim`). Select a region and it opens in Google Lens.
+- A region selection overlay appears. Select a region and it opens in Google Lens.
 
 ### Tray Icon Actions
 
-- **Left-click**: Takes a screenshot according to the system's snipping tool or equivalent.
-- **Right-click**: Show context menu with options:
-  - **Snip**: Takes a screenshot (Linux).
+- **Left-click** (Windows only): Takes a regional screenshot with the snipping tool.
+- **Right-click** (_and also left-click for Linux_): Show context menu with options:
+  - **Snip**: Takes a screenshot (Linux only).
   - **Open App**: Opens Snipping Lens main window.
   - **Exit**: Close the application.
 
-### Settings (Linux)
-
-- **Activation Mode**: Pause (disabled), Tray Only (snip only from tray), Always On (hotkey + tray).
-- **Startup**: Toggle autostart on login via XDG autostart.
-- **App Menu**: Add/remove Snipping Lens from the desktop app menu.
-- **Snip Hotkey**: Configurable hotkey with left/right modifier key distinction.
-
 ## Requirements
 
-- Internet connection for Google Lens.
+- An Internet connection, and access to [Catbox](https://catbox.moe) and [Google](https://google.com).
 
 ### Windows
 
@@ -75,10 +68,7 @@ Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the lates
 
 ### Linux
 
-- X11 display server (required for `maim` capture on non-GNOME desktops).
-- `maim` (screenshot tool) **or** `gnome-screenshot` when running GNOME (`XDG_CURRENT_DESKTOP` contains `GNOME`).
-- System packages for building PyGObject: C compiler, pkg-config, GObject Introspection dev headers, Cairo dev headers.
-- GTK3 and AppIndicator3 (or AyatanaAppIndicator3) GIR typelibs for the system tray.
+- `gnome-screenshot` on GNOME / `spectacle` on KDE / `maim` for other X11-based DE / `slurp` for Wayland.
 - The setup script (`setup_linux.sh`) checks for missing dependencies and tells you what to install.
 
 ## FAQ
@@ -99,9 +89,7 @@ As long as Litterbox returns the expected response (a direct image URL) and as l
 
 ## Building from Source
 
-**Windows:** `setup_win.vbs` already builds the application from source using its own Python 3.10 environment. If you want to use your own Python environment, you need to adjust the path inside the scripts in the bin/win folder.
-
-**Linux:** `setup_linux.sh` downloads its own Python 3.11 environment, creates a virtual environment, installs dependencies, and runs the application. Enable the app menu option to run it from the app menu without the terminal.
+Both `setup_win.vbs` (Windows) and `setup_linux.sh` (Linux) builds the application from source using its own Python 3.10/3.11 environment. If you want to use your own Python environment, you need to adjust the path inside the scripts in the bin/win folder.
 
 ## Support and Contributing
 

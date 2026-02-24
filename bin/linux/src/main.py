@@ -52,6 +52,19 @@ def is_gnome_desktop():
     return "GNOME" in parts
 
 
+def is_kde_desktop():
+    desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").strip()
+    if not desktop:
+        return False
+    # XDG_CURRENT_DESKTOP is often colon-separated e.g. "KDE" or "KDE:KDE"
+    parts = [
+        part.strip().upper()
+        for part in desktop.replace(";", ":").split(":")
+        if part.strip()
+    ]
+    return "KDE" in parts
+
+
 def upload_to_litterbox_requests(image_path: str):
     try:
         with open(image_path, "rb") as f:
@@ -292,9 +305,15 @@ def do_snip(from_tray=False):
         return
 
     use_gnome = is_gnome_desktop()
+    use_kde = (not use_gnome) and is_kde_desktop()
+
     if use_gnome:
         logging.info(
             "[Snip] Detected GNOME via XDG_CURRENT_DESKTOP; using gnome-screenshot."
+        )
+    elif use_kde:
+        logging.info(
+            "[Snip] Detected KDE via XDG_CURRENT_DESKTOP; using spectacle."
         )
     else:
         logging.info("[Snip] Using maim for region selection...")
@@ -303,6 +322,11 @@ def do_snip(from_tray=False):
         if use_gnome:
             result = subprocess.run(
                 ["gnome-screenshot", "-a", "-f", SCREENSHOT_PATH],
+                timeout=120,
+            )
+        elif use_kde:
+            result = subprocess.run(
+                ["spectacle", "-rbn", "-o", SCREENSHOT_PATH],
                 timeout=120,
             )
         else:
@@ -314,6 +338,10 @@ def do_snip(from_tray=False):
         if use_gnome:
             logging.error(
                 "[Snip] gnome-screenshot is not installed. Please install gnome-screenshot."
+            )
+        elif use_kde:
+            logging.error(
+                "[Snip] spectacle is not installed. Please install spectacle."
             )
         else:
             logging.error("[Snip] maim is not installed. Please install maim.")
@@ -336,7 +364,7 @@ def do_snip(from_tray=False):
     # Upload to Litterbox
     logging.info("[Litterbox] Uploading image...")
     try:
-        if use_gnome:
+        if use_gnome or use_kde:
             url = upload_to_litterbox_curl(SCREENSHOT_PATH)
         else:
             url = upload_to_litterbox_requests(SCREENSHOT_PATH)

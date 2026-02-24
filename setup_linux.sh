@@ -124,6 +124,13 @@ check_system_deps() {
             missing_dnf+=("gnome-screenshot")
             missing_pacman+=("gnome-screenshot")
         fi
+    elif [[ "${DESKTOP_ENV^^}" == *"KDE"* ]]; then
+        if ! command -v spectacle >/dev/null 2>&1; then
+            missing_generic+=("spectacle (screenshot tool for KDE)")
+            missing_apt+=("spectacle")
+            missing_dnf+=("spectacle")
+            missing_pacman+=("spectacle")
+        fi
     else
         if ! command -v maim >/dev/null 2>&1; then
             missing_generic+=("maim (screenshot tool)")
