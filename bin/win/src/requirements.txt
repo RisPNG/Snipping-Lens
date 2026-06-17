@@ -1,4 +1,3 @@
-copykitten==1.2.2
 flet==0.28.3
 Pillow==11.2.1
 psutil==7.2.2

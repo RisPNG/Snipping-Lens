@@ -6,8 +6,7 @@ import subprocess
 import psutil
 import time
 import hashlib
-import copykitten
-from PIL import Image
+from PIL import Image, ImageGrab
 from io import BytesIO
 import requests
 import threading
@@ -274,8 +273,12 @@ def md5_image(pixels):
 
 def grab_clipboard_image_and_hash():
     try:
-        pixels, width, height = copykitten.paste_image()
-        return md5_image(pixels), (pixels, width, height)
+        img = ImageGrab.grabclipboard()
+        if not isinstance(img, Image.Image):
+            return None, None
+        img = img.convert("RGBA")
+        pixels = img.tobytes()
+        return md5_image(pixels), (pixels, img.width, img.height)
     except Exception:
         return None, None
 
