@@ -184,3 +184,4 @@ cython_debug/
 *.lnk
 *.lock
 !tee-x64.exe
+!tee-a64.exe

@@ -6,7 +6,13 @@ set BASE_PATH=%~dp0
 set LOGFILE=%BASE_PATH%logs\python.log
 set VENV_PATH=%BASE_PATH%.venv
 set SCRIPT=%BASE_PATH%src\tray_watchdog.py
-set TEE_EXE=%BASE_PATH%..\..\etc\tee-x64.exe
+set ARCH=%PROCESSOR_ARCHITECTURE%
+if /i "%PROCESSOR_ARCHITEW6432%"=="ARM64" set ARCH=ARM64
+if /i "%ARCH%"=="ARM64" (
+    set TEE_EXE=%BASE_PATH%..\..\etc\tee-a64.exe
+) else (
+    set TEE_EXE=%BASE_PATH%..\..\etc\tee-x64.exe
+)
 
 "%VENV_PATH%\Scripts\python.exe" "%SCRIPT%"										| "%TEE_EXE%" -a "%LOGFILE%"
 
