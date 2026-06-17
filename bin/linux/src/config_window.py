@@ -75,6 +75,7 @@ def load_settings():
             "startup": val("startup", 0),
             "app_menu": val("app_menu", 0),
             "alternate_hotkey": val("alternate_hotkey", "alt+ctrl+\\"),
+            "alternate_hotkey_bypass": val("alternate_hotkey_bypass", True),
         }
     except Exception:
         return {
@@ -82,6 +83,7 @@ def load_settings():
             "startup": 0,
             "app_menu": 0,
             "alternate_hotkey": "alt+ctrl+\\",
+            "alternate_hotkey_bypass": True,
         }
 
 
@@ -107,6 +109,10 @@ def save_settings(settings):
         raw["alternate_hotkey"] = {
             "value": settings["alternate_hotkey"],
             "description": "Hotkey to trigger snip (e.g., 'ralt+rctrl+s')",
+        }
+        raw["alternate_hotkey_bypass"] = {
+            "value": settings["alternate_hotkey_bypass"],
+            "description": "Allow the alternate hotkey to perform an image search in Tray Only mode.",
         }
         with open(SETTINGS_PATH, "w") as f:
             json.dump(raw, f, indent=4)
@@ -448,6 +454,25 @@ def main(page: ft.Page):
         helper_text="Click to capture new hotkey.",
     )
 
+    def on_hotkey_bypass_toggle(e):
+        idx = int(e.data)
+        settings["alternate_hotkey_bypass"] = bool(idx)
+        save_settings(settings)
+        hotkey_bypass_toggle.selected_index = idx
+        hotkey_bypass_toggle.thumb_color = startup_color_map[idx]
+        page.update()
+
+    hotkey_bypass_toggle = ft.CupertinoSlidingSegmentedButton(
+        selected_index=int(settings["alternate_hotkey_bypass"]),
+        thumb_color=startup_color_map[int(settings["alternate_hotkey_bypass"])],
+        on_change=on_hotkey_bypass_toggle,
+        padding=ft.padding.symmetric(0, 10),
+        controls=[
+            ft.Text("Off"),
+            ft.Text("On", tooltip="Allow the alternate hotkey to perform an image search in Tray Only mode."),
+        ],
+    )
+
     log_field = ft.TextField(
         label="Live Log",
         read_only=True,
@@ -506,6 +531,12 @@ def main(page: ft.Page):
                                     weight=ft.FontWeight.BOLD,
                                 ),
                                 hotkey_field,
+                                ft.Text(
+                                    "Alt Hotkey Bypass",
+                                    size=16,
+                                    weight=ft.FontWeight.BOLD,
+                                ),
+                                hotkey_bypass_toggle,
                             ],
                             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                         ),

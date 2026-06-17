@@ -15,6 +15,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import logging
 import signal
+import uuid
 
 # Import for hotkey functionality
 try:
@@ -116,6 +117,11 @@ try:
             "value": "",
             "description": "Alternate hotkey for Windows Snipping Tool (e.g., 'ctrl+shift+s')",
         }
+    if "alternate_hotkey_bypass" not in raw:
+        raw["alternate_hotkey_bypass"] = {
+            "value": True,
+            "description": "Allow the alternate hotkey to perform an image search in Tray Only mode.",
+        }
     with open(SETTINGS_PATH, "w") as f:
         json.dump(raw, f, indent=4)
 except Exception as e:
@@ -162,10 +168,30 @@ def get_alternate_hotkey():
         return ""
 
 
+def get_alternate_hotkey_bypass():
+    try:
+        with open(SETTINGS_PATH, "r") as f:
+            raw = json.load(f)
+        v = raw.get("alternate_hotkey_bypass", True)
+        if isinstance(v, dict) and "value" in v:
+            v = v["value"]
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            return v.lower() in ("true", "1", "yes", "on")
+        return bool(v)
+    except Exception:
+        return True
+
+
 def launch_snipping_tool():
-    """Launch the Windows Snipping Tool"""
+    """Launch the Windows Snipping Tool via the alternate hotkey."""
     try:
         logging.info("[Hotkey] Launching Snipping Tool via alternate hotkey.")
+        if get_alternate_hotkey_bypass():
+            token = str(uuid.uuid4())
+            update_settings({"tray_snip_token": token})
+            logging.info(f"Generated snip token: {token}")
         subprocess.Popen(["explorer.exe", "ms-screenclip:"])
     except Exception as e:
         logging.error(f"[Hotkey] Failed to launch Snipping Tool: {e}")

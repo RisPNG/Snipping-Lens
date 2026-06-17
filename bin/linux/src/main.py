@@ -288,6 +288,15 @@ def get_alternate_hotkey():
     return str(val).strip() if val else ""
 
 
+def get_alternate_hotkey_bypass():
+    val = get_setting_value("alternate_hotkey_bypass", True)
+    if isinstance(val, bool):
+        return val
+    if isinstance(val, str):
+        return val.lower() in ("true", "1", "yes", "on")
+    return bool(val)
+
+
 def update_settings(updates: dict, delete_keys: list = None):
     try:
         try:
@@ -336,6 +345,12 @@ try:
         raw["alternate_hotkey"] = {
             "value": "alt+ctrl+\\",
             "description": "Hotkey to trigger snip (e.g., 'alt+ctrl+\\\\')",
+        }
+
+    if "alternate_hotkey_bypass" not in raw:
+        raw["alternate_hotkey_bypass"] = {
+            "value": True,
+            "description": "Allow the alternate hotkey to perform an image search in Tray Only mode.",
         }
 
     if "tray_status" not in raw:
@@ -604,9 +619,13 @@ def setup_hotkey_listener():
         pynput_hotkey = "+".join(pynput_parts)
 
         def on_hotkey():
-            logging.info("[Hotkey] Hotkey triggered, starting snip...")
+            logging.info("[Hotkey] Alternate hotkey triggered, starting snip...")
             # Run snip in a separate thread so the hotkey listener isn't blocked
-            threading.Thread(target=do_snip, args=(False,), daemon=True).start()
+            threading.Thread(
+                target=do_snip,
+                args=(get_alternate_hotkey_bypass(),),
+                daemon=True,
+            ).start()
 
         hotkey_listener = keyboard.GlobalHotKeys({pynput_hotkey: on_hotkey})
         hotkey_listener.start()
