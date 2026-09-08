@@ -1,0 +1,4 @@
+flet==1.0.0
+PySide6==6.11.2
+httpx==0.28.1
+pynput==1.8.2
