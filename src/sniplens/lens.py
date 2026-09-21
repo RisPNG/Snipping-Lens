@@ -15,16 +15,15 @@ class LensSearchService(QObject):
     the GUI thread never blocks on networking."""
 
     searchFinished = Signal(str)
-    searchFailed = Signal(str)
 
     def __init__(self):
         super().__init__()
         self._loop = None
         self._thread = None
         self._client = None
+        self._ready = threading.Event()
 
     def start(self):
-        self._ready = threading.Event()
         self._thread = threading.Thread(target=self._run_loop, name="lens-search", daemon=True)
         self._thread.start()
         self._ready.wait()
@@ -43,7 +42,6 @@ class LensSearchService(QObject):
             error = future.exception()
             if error is not None:
                 logging.error("[Lens] Image search failed: %s", error)
-                self.searchFailed.emit(str(error))
             else:
                 self.searchFinished.emit(future.result())
 
