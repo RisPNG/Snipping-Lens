@@ -19,6 +19,13 @@ REQUEST_INTERFACE = "org.freedesktop.portal.Request"
 REQUEST_TIMEOUT = 120
 AREA_TARGET = 4
 
+# the portal is not running, or its backend serves no Screenshot interface
+UNAVAILABLE_ERRORS = (
+    "org.freedesktop.DBus.Error.ServiceUnknown",
+    "org.freedesktop.DBus.Error.UnknownInterface",
+    "org.freedesktop.DBus.Error.UnknownObject",
+)
+
 PORTAL_BACKEND_PACKAGES = {
     "gnome": "xdg-desktop-portal-gnome",
     "kde": "xdg-desktop-portal-kde",
@@ -70,6 +77,9 @@ class PortalRegionCapture(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._busy = False
+        self._loop = None
+        self._bus = None
+        self._request_path = None
 
     def request_region(self):
         if self._busy:
@@ -78,7 +88,11 @@ class PortalRegionCapture(QObject):
         threading.Thread(target=self._run, name="portal-capture", daemon=True).start()
 
     def stop(self):
-        pass
+        """Closing the request makes the desktop dismiss its own selection UI
+        and answer with a Response, so the capture ends the ordinary way
+        instead of being abandoned with the overlay still on screen."""
+        if self._loop is not None and self._request_path is not None:
+            asyncio.run_coroutine_threadsafe(self._close_request(), self._loop)
 
     def _run(self):
         outcome = asyncio.run(self._capture())
@@ -86,6 +100,7 @@ class PortalRegionCapture(QObject):
         self.completed.emit(outcome)
 
     async def _capture(self):
+        self._loop = asyncio.get_running_loop()
         try:
             return await self._capture_unchecked()
         except asyncio.TimeoutError:
@@ -93,16 +108,19 @@ class PortalRegionCapture(QObject):
         except Exception as e:
             logging.error("[Snip] Portal capture failed: %s", e)
             return CaptureFailed(str(e))
+        finally:
+            self._loop = None
 
     async def _capture_unchecked(self):
         try:
             bus = await MessageBus(bus_type=BusType.SESSION).connect()
         except Exception as e:
             return BackendUnavailable(f"no session D-Bus for the XDG portal: {e}")
+        self._bus = bus
         try:
             version = await self._screenshot_version(bus)
-            if version is None:
-                return BackendUnavailable(portal_unavailable_message())
+            if not isinstance(version, int):
+                return version
 
             response = asyncio.get_running_loop().create_future()
 
@@ -154,19 +172,27 @@ class PortalRegionCapture(QObject):
                 )
             )
             if reply.message_type == MessageType.ERROR:
-                if reply.error_name in (
-                    "org.freedesktop.DBus.Error.ServiceUnknown",
-                    "org.freedesktop.DBus.Error.UnknownInterface",
-                    "org.freedesktop.DBus.Error.UnknownObject",
-                ):
+                if reply.error_name in UNAVAILABLE_ERRORS:
                     return BackendUnavailable(portal_unavailable_message())
                 if reply.error_name == "org.freedesktop.portal.Error.NotAllowed":
                     return PermissionDenied("the desktop denied the screenshot request")
                 return CaptureFailed(f"portal rejected the request: {reply.error_name}")
 
-            code, results = await asyncio.wait_for(response, REQUEST_TIMEOUT)
+            self._request_path = reply.body[0]
+            try:
+                code, results = await asyncio.wait_for(response, REQUEST_TIMEOUT)
+            except asyncio.TimeoutError:
+                await self._close_request()
+                raise
+            finally:
+                self._request_path = None
+
+            # org.freedesktop.portal.Request: 0 carried out, 1 cancelled by the
+            # user, 2 ended some other way - neither 1 nor 2 is a failure
             if code == 1:
                 return Cancelled("dismissed in the portal selection")
+            if code == 2:
+                return Cancelled("portal selection ended without a screenshot")
             if code != 0:
                 return CaptureFailed(f"portal returned response code {code}")
 
@@ -179,9 +205,24 @@ class PortalRegionCapture(QObject):
                 os.remove(path)
             return Success(image)
         finally:
+            self._bus = None
             bus.disconnect()
 
+    async def _close_request(self):
+        if self._bus is None or self._request_path is None:
+            return
+        await self._bus.call(
+            Message(
+                destination=PORTAL_SERVICE,
+                path=self._request_path,
+                interface=REQUEST_INTERFACE,
+                member="Close",
+            )
+        )
+
     async def _screenshot_version(self, bus):
+        """The Screenshot interface version, or the outcome explaining why it
+        could not be read."""
         reply = await asyncio.wait_for(
             bus.call(
                 Message(
@@ -196,13 +237,11 @@ class PortalRegionCapture(QObject):
             5,
         )
         if reply.message_type == MessageType.ERROR:
-            if reply.error_name in (
-                "org.freedesktop.DBus.Error.ServiceUnknown",
-                "org.freedesktop.DBus.Error.UnknownInterface",
-                "org.freedesktop.DBus.Error.UnknownObject",
-            ):
-                return None
-            raise CaptureFailed(f"could not read the portal Screenshot version: {reply.error_name}")
+            if reply.error_name in UNAVAILABLE_ERRORS:
+                return BackendUnavailable(portal_unavailable_message())
+            return CaptureFailed(
+                f"could not read the portal Screenshot version: {reply.error_name}"
+            )
         return getattr(reply.body[0], "value", reply.body[0])
 
     async def _available_targets(self, bus):
