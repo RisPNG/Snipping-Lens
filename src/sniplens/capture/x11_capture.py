@@ -11,15 +11,19 @@ MIN_SELECTION = 3
 
 def virtual_desktop_canvas():
     """Grabs every screen into one image covering the union of all monitor
-    geometries, scaled to the primary screen's device pixel ratio."""
+    geometries. The canvas is scaled to the densest screen so a HiDPI monitor
+    is not downsampled to a lower-density neighbour."""
     screens = QGuiApplication.screens()
     union = screens[0].geometry()
     for screen in screens[1:]:
         union = union.united(screen.geometry())
-    dpr = QGuiApplication.primaryScreen().devicePixelRatio()
+    dpr = max(screen.devicePixelRatio() for screen in screens)
     canvas = QImage(
         round(union.width() * dpr), round(union.height() * dpr), QImage.Format.Format_ARGB32
     )
+    # a non-rectangular arrangement leaves parts of the union uncovered, and a
+    # fresh QImage holds whatever was in the buffer
+    canvas.fill(Qt.GlobalColor.black)
     painter = QPainter(canvas)
     for screen in screens:
         grab = screen.grabWindow(0).toImage()
@@ -111,8 +115,11 @@ class X11RegionCapture(QObject):
         self._dpr = 1.0
 
     def stop(self):
-        if self._overlay is not None:
-            self._overlay.close()
+        if self._overlay is None:
+            return
+        overlay, self._overlay = self._overlay, None
+        overlay.close()
+        self.completed.emit(Cancelled("selection dismissed"))
 
     def request_region(self):
         if self._overlay is not None:
