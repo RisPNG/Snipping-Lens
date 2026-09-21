@@ -48,6 +48,12 @@ class TrayController:
         quit_action = self.menu.addAction("Exit")
         quit_action.triggered.connect(self._commands.quit)
         self.tray_icon.setContextMenu(self.menu)
+        # the menu's first realization pays the style polish, window creation
+        # and font metrics; pay it here so the first right-click is as fast as
+        # every later one instead of stalling for seconds
+        self.menu.ensurePolished()
+        self.menu.winId()
+        self.menu.sizeHint()
 
     def show(self):
         self.tray_icon.show()
