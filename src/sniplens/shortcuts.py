@@ -1,22 +1,48 @@
 import logging
 import os
 
-from sniplens import paths
+from sniplens import APP_NAME, paths
 
-APP_NAME = "Snipping Lens"
+LNK_NAME = f"{APP_NAME}.lnk"
 
 if paths.IS_WINDOWS:
     import winshell
 
-    ROOT_LNK = os.path.join(paths.ROOT, "Snipping Lens.lnk")
+    ROOT_LNK = os.path.join(paths.ROOT, LNK_NAME)
     RUN_VBS = os.path.join(paths.PLATFORM_DIR, "run.vbs")
     LNK_ICON = os.path.join(paths.ASSETS_DIR, "sniplens.ico")
 else:
-    AUTOSTART_DIR = os.path.expanduser("~/.config/autostart")
-    APPLICATIONS_DIR = os.path.expanduser("~/.local/share/applications")
-    AUTOSTART_FILE = os.path.join(AUTOSTART_DIR, "snipping-lens-startup.desktop")
-    APP_MENU_FILE = os.path.join(APPLICATIONS_DIR, "snipping-lens.desktop")
+    AUTOSTART_FILE = os.path.expanduser(
+        "~/.config/autostart/snipping-lens-startup.desktop"
+    )
+    APP_MENU_FILE = os.path.expanduser(
+        "~/.local/share/applications/snipping-lens.desktop"
+    )
     SETUP_SCRIPT = os.path.join(paths.ROOT, "setup_linux.sh")
+    # quoted per the Desktop Entry spec so an install path containing spaces
+    # still launches, and run through bash so the script needs no exec bit
+    LAUNCH_COMMAND = f'bash "{SETUP_SCRIPT}" --hidden'
+
+    AUTOSTART_CONTENT = (
+        "[Desktop Entry]\n"
+        "Type=Application\n"
+        f"Exec={LAUNCH_COMMAND}\n"
+        "Terminal=false\n"
+        "Hidden=false\n"
+        "NoDisplay=false\n"
+        "X-GNOME-Autostart-enabled=true\n"
+        f"Name={APP_NAME}\n"
+    )
+    APP_MENU_CONTENT = (
+        "[Desktop Entry]\n"
+        "Type=Application\n"
+        f"Exec={LAUNCH_COMMAND}\n"
+        "Terminal=false\n"
+        f"Icon={paths.TRAY_ICON_PATH}\n"
+        f"Name={APP_NAME}\n"
+        "Comment=Screenshot to Google Lens\n"
+        "Categories=Utility;\n"
+    )
 
 
 def ensure_integration_entries(startup_enabled, app_menu_enabled=False):
@@ -25,42 +51,42 @@ def ensure_integration_entries(startup_enabled, app_menu_enabled=False):
     if paths.IS_WINDOWS:
         _ensure_lnk(ROOT_LNK)
         if startup_enabled:
-            _ensure_lnk(os.path.join(winshell.startup(), "Snipping Lens.lnk"))
+            _ensure_lnk(os.path.join(winshell.startup(), LNK_NAME))
     else:
         if startup_enabled:
-            _write_desktop_file(AUTOSTART_FILE, _autostart_content())
+            _write_desktop_file(AUTOSTART_FILE, AUTOSTART_CONTENT)
         if app_menu_enabled:
-            _write_desktop_file(APP_MENU_FILE, _app_menu_content())
+            _write_desktop_file(APP_MENU_FILE, APP_MENU_CONTENT)
 
 
 def set_startup(enabled):
     if paths.IS_WINDOWS:
-        startup_lnk = os.path.join(winshell.startup(), "Snipping Lens.lnk")
+        startup_lnk = os.path.join(winshell.startup(), LNK_NAME)
         if enabled:
             _ensure_lnk(ROOT_LNK)
             _ensure_lnk(startup_lnk)
-            logging.info("Snipping Lens added to startup.")
+            logging.info("%s added to startup.", APP_NAME)
         else:
             _remove(startup_lnk)
-            logging.info("Snipping Lens removed from startup.")
+            logging.info("%s removed from startup.", APP_NAME)
     else:
         if enabled:
-            _write_desktop_file(AUTOSTART_FILE, _autostart_content())
-            logging.info("Snipping Lens added to autostart.")
+            _write_desktop_file(AUTOSTART_FILE, AUTOSTART_CONTENT)
+            logging.info("%s added to autostart.", APP_NAME)
         else:
             _remove(AUTOSTART_FILE)
-            logging.info("Snipping Lens removed from autostart.")
+            logging.info("%s removed from autostart.", APP_NAME)
 
 
 def set_app_menu(enabled):
     if paths.IS_WINDOWS:
         return
     if enabled:
-        _write_desktop_file(APP_MENU_FILE, _app_menu_content())
-        logging.info("Snipping Lens added to the app menu.")
+        _write_desktop_file(APP_MENU_FILE, APP_MENU_CONTENT)
+        logging.info("%s added to the app menu.", APP_NAME)
     else:
         _remove(APP_MENU_FILE)
-        logging.info("Snipping Lens removed from the app menu.")
+        logging.info("%s removed from the app menu.", APP_NAME)
 
 
 if paths.IS_WINDOWS:
@@ -68,39 +94,19 @@ if paths.IS_WINDOWS:
     def _ensure_lnk(lnk_path):
         if os.path.exists(lnk_path):
             link = winshell.shortcut(lnk_path)
-            if link.path and os.path.abspath(link.path) == os.path.abspath(RUN_VBS):
+            if (
+                link.path
+                and os.path.abspath(link.path) == os.path.abspath(RUN_VBS)
+                and link.icon_location == (LNK_ICON, 0)
+            ):
                 return
         with winshell.shortcut(lnk_path) as link:
             link.path = RUN_VBS
-            link.icon = (LNK_ICON, 0)
+            link.icon_location = (LNK_ICON, 0)
             link.description = APP_NAME
             link.working_directory = paths.ROOT
 
 else:
-
-    def _autostart_content():
-        return (
-            "[Desktop Entry]\n"
-            "Type=Application\n"
-            f'Exec=bash -c "{SETUP_SCRIPT} --hidden"\n'
-            "Terminal=false\n"
-            "Hidden=false\n"
-            "NoDisplay=false\n"
-            "X-GNOME-Autostart-enabled=true\n"
-            f"Name={APP_NAME}\n"
-        )
-
-    def _app_menu_content():
-        return (
-            "[Desktop Entry]\n"
-            "Type=Application\n"
-            f'Exec=bash -c "{SETUP_SCRIPT} --hidden"\n'
-            "Terminal=false\n"
-            f"Icon={paths.TRAY_ICON_PATH}\n"
-            f"Name={APP_NAME}\n"
-            "Comment=Screenshot to Google Lens\n"
-            "Categories=Utility;\n"
-        )
 
     def _write_desktop_file(path, content):
         try:
