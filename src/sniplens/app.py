@@ -1,6 +1,7 @@
 import logging
 import os
 import signal
+import socket
 import subprocess
 import sys
 import webbrowser
@@ -11,14 +12,7 @@ from PySide6.QtNetwork import QLocalServer, QLocalSocket
 from PySide6.QtWidgets import QApplication
 
 from sniplens import APP_NAME, __version__, paths
-from sniplens.capture import (
-    BackendUnavailable,
-    Cancelled,
-    CaptureFailed,
-    PermissionDenied,
-    Success,
-    create_capture_service,
-)
+from sniplens.capture import Cancelled, Success, create_capture_service
 from sniplens.hotkey import HotkeyController
 from sniplens.images import image_hash, png_bytes
 from sniplens.lens import GOOGLE_LENS_URL, LensSearchService
@@ -28,6 +22,10 @@ from sniplens.shortcuts import ensure_integration_entries
 from sniplens.tray import TrayController
 
 SINGLE_INSTANCE_NAME = "snipping-lens"
+
+# the keys Windows itself binds to the Snipping Tool; watching them is how a
+# snip the user started without us still arms a capture transaction
+SYSTEM_SNIP_HOTKEYS = ("win+shift+s", "printscreen")
 
 
 class ApplicationCore:
@@ -61,6 +59,14 @@ class ApplicationCore:
     def alternate_hotkey_bypass(self):
         return bool(self.values.get("alternate_hotkey_bypass", True))
 
+    @property
+    def last_detected_image(self):
+        return self.values.get("last_detected_image", "")
+
+    def remember_detected_image(self, digest):
+        self.values["last_detected_image"] = digest
+        self.store.save({"last_detected_image": digest})
+
 
 class ApplicationController(QObject):
     """Owns the application lifecycle; tray and hotkey only forward commands
@@ -69,6 +75,7 @@ class ApplicationController(QObject):
     # emitted from any thread (pynput listener, tray), handled on the GUI
     # thread where the Qt capture backends must run
     _snipRequested = Signal(bool)
+    _systemSnipDetected = Signal()
 
     def __init__(self, core, capture, lens):
         super().__init__()
@@ -77,14 +84,17 @@ class ApplicationController(QObject):
         self._lens = lens
         self._lens.searchFinished.connect(self._open_lens)
         self._snipRequested.connect(self._handle_snip_request)
+        self._systemSnipDetected.connect(self._handle_system_snip)
         self._tray = None
-        self._hotkey = HotkeyController(
-            lambda: self.request_snip(from_app_trigger=self._core.alternate_hotkey_bypass)
-        )
+        self._hotkey = HotkeyController()
         self._watcher = QFileSystemWatcher(self)
         self._watcher.directoryChanged.connect(self._on_settings_dir_changed)
         self._watcher.fileChanged.connect(self._on_settings_file_changed)
+        self._instance_server = None
+        self._wakeup_reader = None
+        self._wakeup_writer = None
         self._config_process = None
+        self._pending_from_app_trigger = True
         self._quitting = False
 
     def attach_tray(self, tray):
@@ -94,29 +104,19 @@ class ApplicationController(QObject):
         self._watcher.addPath(paths.CONFIG_DIR)
         if os.path.exists(paths.SETTINGS_PATH):
             self._watcher.addPath(paths.SETTINGS_PATH)
-        if paths.IS_WINDOWS:
-            self._capture.completed.connect(self._on_snip_completed)
-            self._capture.image_copied.connect(self._on_clipboard_image)
-        else:
-            self._capture.completed.connect(self._on_snip_completed)
-        self._hotkey.reconfigure(self._core.alternate_hotkey)
+        self._capture.completed.connect(self._on_snip_completed)
+        self._hotkey.reconfigure(self._hotkeys())
         ensure_integration_entries(
             self._core.startup_enabled, self._core.app_menu_enabled
         )
+        self._listen_for_instances()
+        self._install_signal_handlers()
 
     def request_snip(self, from_app_trigger=True):
         self._snipRequested.emit(from_app_trigger)
 
-    def _handle_snip_request(self, from_app_trigger):
-        if not paths.IS_WINDOWS:
-            status = self._core.tray_status
-            if status == PAUSED:
-                logging.info("[Snip] Paused, skipping snip.")
-                return
-            if status == TRAY_ONLY and not from_app_trigger:
-                logging.info("[Snip] Tray Only mode but snip not triggered from the app, skipping.")
-                return
-        self._capture.request_region(from_app_trigger=from_app_trigger)
+    def notify_system_snip(self):
+        self._systemSnipDetected.emit()
 
     def open_config_window(self):
         if self._config_process is not None and self._config_process.poll() is None:
@@ -136,44 +136,76 @@ class ApplicationController(QObject):
         self._hotkey.stop()
         self._capture.stop()
         self._lens.stop()
+        if self._config_process is not None and self._config_process.poll() is None:
+            self._config_process.terminate()
         if self._tray is not None:
             self._tray.shutdown()
+        if self._wakeup_writer is not None:
+            signal.set_wakeup_fd(-1)
+            self._wakeup_reader.close()
+            self._wakeup_writer.close()
+        if self._instance_server is not None:
+            self._instance_server.close()
+            QLocalServer.removeServer(SINGLE_INSTANCE_NAME)
         QApplication.quit()
 
+    def _hotkeys(self):
+        hotkeys = {}
+        if self._core.alternate_hotkey:
+            hotkeys[self._core.alternate_hotkey] = lambda: self.request_snip(
+                from_app_trigger=self._core.alternate_hotkey_bypass
+            )
+        if paths.IS_WINDOWS:
+            for combination in SYSTEM_SNIP_HOTKEYS:
+                hotkeys[combination] = self.notify_system_snip
+        return hotkeys
+
+    def _handle_snip_request(self, from_app_trigger):
+        if not paths.IS_WINDOWS:
+            status = self._core.tray_status
+            if status == PAUSED:
+                logging.info("[Snip] Paused, skipping snip.")
+                return
+            if status == TRAY_ONLY and not from_app_trigger:
+                logging.info("[Snip] Tray Only mode but snip not triggered from the app, skipping.")
+                return
+        self._pending_from_app_trigger = from_app_trigger
+        self._capture.request_region()
+
+    def _handle_system_snip(self):
+        if self._core.tray_status == PAUSED:
+            logging.info("[Snip] Paused, ignoring the system snip.")
+            return
+        self._pending_from_app_trigger = False
+        self._capture.arm_for_system_snip()
+
     def _on_snip_completed(self, outcome):
-        if isinstance(outcome, Success):
-            if not paths.IS_WINDOWS:
-                QGuiApplication.clipboard().setImage(outcome.image)
-            if paths.IS_WINDOWS and self._already_seen(outcome.image):
+        if self._quitting:
+            return
+        if isinstance(outcome, Cancelled):
+            logging.info("[Snip] Capture cancelled: %s", outcome.reason)
+            return
+        if not isinstance(outcome, Success):
+            logging.error("[Snip] Capture failed: %s", outcome.message)
+            return
+        if paths.IS_WINDOWS:
+            # the Windows clipboard is the transport, so the same capture can be
+            # announced more than once; Linux backends hand the image straight over
+            digest = image_hash(outcome.image)
+            if digest == self._core.last_detected_image:
                 logging.info("[Snip] Duplicate clipboard image, skipping search.")
                 return
-            if self._should_search(outcome.from_app_trigger):
-                self._lens.search(png_bytes(outcome.image))
-            else:
-                logging.info("[Snip] Search skipped by the activation mode.")
-        elif isinstance(outcome, Cancelled):
-            logging.info("[Snip] Capture cancelled: %s", outcome.reason)
-        elif isinstance(outcome, (BackendUnavailable, CaptureFailed, PermissionDenied)):
-            logging.error("[Snip] Capture failed: %s", outcome.message)
-
-    def _on_clipboard_image(self, image):
-        if self._core.tray_status != ALWAYS_ON:
-            return
-        if self._already_seen(image):
-            return
-        self._lens.search(png_bytes(image))
+            self._core.remember_detected_image(digest)
+        else:
+            QGuiApplication.clipboard().setImage(outcome.image)
+        if self._should_search(self._pending_from_app_trigger):
+            self._lens.search(png_bytes(outcome.image))
+        else:
+            logging.info("[Snip] Search skipped by the activation mode.")
 
     def _should_search(self, from_app_trigger):
         status = self._core.tray_status
         return status == ALWAYS_ON or (status == TRAY_ONLY and from_app_trigger)
-
-    def _already_seen(self, image):
-        digest = image_hash(image)
-        if digest == self._core.values.get("last_detected_image", ""):
-            return True
-        self._core.values["last_detected_image"] = digest
-        self._core.store.save({"last_detected_image": digest})
-        return False
 
     def _open_lens(self, url):
         lens_url = GOOGLE_LENS_URL.format(url)
@@ -186,13 +218,63 @@ class ApplicationController(QObject):
         self._reload_settings()
 
     def _on_settings_file_changed(self, path):
+        # settings are saved by replacing the file, which drops the old inode
+        # out of the watch list
         if os.path.exists(path):
             self._watcher.addPath(path)
         self._reload_settings()
 
     def _reload_settings(self):
         self._core.reload()
-        self._hotkey.reconfigure(self._core.alternate_hotkey)
+        self._hotkey.reconfigure(self._hotkeys())
+
+    def _listen_for_instances(self):
+        server = QLocalServer(self)
+        if not server.listen(SINGLE_INSTANCE_NAME):
+            # only a socket left behind by a crashed instance can block this;
+            # a live one was already ruled out by _signal_existing_instance
+            QLocalServer.removeServer(SINGLE_INSTANCE_NAME)
+            if not server.listen(SINGLE_INSTANCE_NAME):
+                logging.warning("Single-instance listener unavailable: %s", server.errorString())
+                return
+        server.newConnection.connect(self._on_instance_connection)
+        self._instance_server = server
+
+    def _on_instance_connection(self):
+        connection = self._instance_server.nextPendingConnection()
+        if connection is None:
+            return
+        connection.setParent(self._instance_server)
+
+        def read_activation():
+            if b"activate" in bytes(connection.readAll()):
+                self.open_config_window()
+                connection.disconnectFromServer()
+
+        connection.readyRead.connect(read_activation)
+        # the activation byte usually arrives together with the connection,
+        # before readyRead can be connected
+        read_activation()
+
+    def _install_signal_handlers(self):
+        # a socketpair rather than a pipe: on Windows os.set_blocking does not
+        # exist and QSocketNotifier is serviced by WSAAsyncSelect, which only
+        # accepts sockets
+        self._wakeup_reader, self._wakeup_writer = socket.socketpair()
+        self._wakeup_reader.setblocking(False)
+        self._wakeup_writer.setblocking(False)
+        signal.set_wakeup_fd(self._wakeup_writer.fileno())
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            signal.signal(sig, lambda _signum, _frame: None)
+        # parented to the controller so it lives as long as the application
+        notifier = QSocketNotifier(
+            self._wakeup_reader.fileno(), QSocketNotifier.Type.Read, self
+        )
+        notifier.activated.connect(self._on_signal_received)
+
+    def _on_signal_received(self):
+        self._wakeup_reader.recv(256)
+        self.quit()
 
 
 def _signal_existing_instance():
@@ -206,53 +288,9 @@ def _signal_existing_instance():
     return True
 
 
-def _listen_for_instances(controller):
-    QLocalServer.removeServer(SINGLE_INSTANCE_NAME)
-    server = QLocalServer()
-    if not server.listen(SINGLE_INSTANCE_NAME):
-        logging.warning("Single-instance listener unavailable: %s", server.errorString())
-        return server
-
-    def on_new_connection():
-        connection = server.nextPendingConnection()
-        if connection is None:
-            return
-        connection.setParent(server)
-
-        def read_activation():
-            if b"activate" in bytes(connection.readAll()):
-                controller.open_config_window()
-                connection.disconnectFromServer()
-
-        connection.readyRead.connect(read_activation)
-        # the activation byte usually arrives together with the connection,
-        # before readyRead can be connected
-        read_activation()
-
-    server.newConnection.connect(on_new_connection)
-    return server
-
-
-def _install_signal_handlers(controller):
-    read_fd, write_fd = os.pipe()
-    os.set_blocking(write_fd, False)
-    signal.set_wakeup_fd(write_fd)
-    for sig in (signal.SIGINT, signal.SIGTERM):
-        signal.signal(sig, lambda _signum, _frame: None)
-    # parented to the controller so it lives as long as the application
-    notifier = QSocketNotifier(read_fd, QSocketNotifier.Type.Read, controller)
-
-    def wake_up():
-        os.read(read_fd, 256)
-        controller.quit()
-
-    notifier.activated.connect(wake_up)
-
-
 def run():
     setup_logging()
     os.makedirs(paths.CONFIG_DIR, exist_ok=True)
-    os.makedirs(paths.LOGS_DIR, exist_ok=True)
     logging.info("%s %s starting.", APP_NAME, __version__)
 
     app = QApplication(sys.argv)
@@ -267,18 +305,14 @@ def run():
     lens = LensSearchService()
     lens.start()
     controller = ApplicationController(core, create_capture_service(app), lens)
-    controller.start()
 
     tray = TrayController(
         controller, paths.TRAY_ICON_PATH, snip_on_left_click=paths.IS_WINDOWS
     )
     controller.attach_tray(tray)
+    controller.start()
     tray.show()
-
-    server = _listen_for_instances(controller)
-    _install_signal_handlers(controller)
 
     exit_code = app.exec()
     controller.quit()
-    QLocalServer.removeServer(SINGLE_INSTANCE_NAME)
     return exit_code

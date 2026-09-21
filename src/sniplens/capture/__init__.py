@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QImage
 
 from sniplens import paths
@@ -9,7 +8,6 @@ from sniplens import paths
 @dataclass
 class Success:
     image: QImage
-    from_app_trigger: bool = False
 
 
 @dataclass
