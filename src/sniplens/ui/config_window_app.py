@@ -4,20 +4,25 @@ import os
 
 import flet as ft
 
-from sniplens import APP_NAME, paths
+from sniplens import APP_NAME, paths, theme
+from sniplens.hotkey import MODIFIER_NAMES
+from sniplens.logging_setup import setup_logging
 from sniplens.settings import SettingsStore
 from sniplens.shortcuts import set_app_menu, set_startup
 
 STATUS_COLORS = {
-    0: "#ea4335",
-    1: "#fbbc04",
-    2: "#4285f4",
+    0: theme.DANGER,
+    1: theme.WARNING,
+    2: theme.ACCENT,
 }
 
 SWITCH_COLORS = {
-    0: "#ea4335",
-    1: "#4285f4",
+    0: theme.DANGER,
+    1: theme.ACCENT,
 }
+
+LOG_TAIL_BYTES = 8192
+LOG_TAIL_LINES = 10
 
 # Modifier keys report a side on Linux ("Control Left") while the generic
 # names arrive without one.
@@ -34,18 +39,23 @@ MODIFIER_KEYS = {
 
 GENERIC_MODIFIERS = {"control": "ctrl", "alt": "alt", "shift": "shift", "meta": "win", "cmd": "win"}
 
-MODIFIER_NAMES = {
-    "lctrl", "rctrl", "lalt", "ralt", "lshift", "rshift", "lwin", "rwin",
-    "ctrl", "alt", "shift", "win",
-}
-
+# Flet key names that the hotkey vocabulary in sniplens.hotkey spells
+# differently; anything not listed here is already spelled the same.
 KEY_ALIASES = {
+    "arrow up": "up",
+    "arrow down": "down",
+    "arrow left": "left",
+    "arrow right": "right",
     "arrowup": "up",
     "arrowdown": "down",
     "arrowleft": "left",
     "arrowright": "right",
     " ": "space",
     "delete": "del",
+    "insert": "ins",
+    "page up": "pgup",
+    "page down": "pgdn",
+    "print screen": "printscreen",
 }
 
 
@@ -65,12 +75,14 @@ def build_config_window(page: ft.Page):
     page.window.height = 550
     page.window.min_width = 700
     page.window.min_height = 550
-    page.horizontal_alignment = ft.MainAxisAlignment.CENTER
-    page.vertical_alignment = ft.CrossAxisAlignment.CENTER
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
 
     def save(updates):
         settings.update(updates)
-        store.save(settings)
+        # only the changed keys go to the store, which merges them; writing the
+        # whole snapshot back would republish values the main app owns
+        store.save(updates)
 
     def segmented(selected, options, colors, on_change):
         def handler(e):
@@ -135,14 +147,12 @@ def build_config_window(page: ft.Page):
     captured_keys = []
 
     def refresh_hotkey_field():
-        hotkey_field.value = settings["alternate_hotkey"] or (
-            "Recording keys..." if is_capturing_hotkey[0] else ""
-        )
-        hotkey_field.helper = (
-            "Press ENTER to save, and ESC to cancel."
-            if is_capturing_hotkey[0]
-            else "Click to capture new hotkey."
-        )
+        if is_capturing_hotkey[0]:
+            hotkey_field.value = format_hotkey(captured_keys) or "Recording keys..."
+            hotkey_field.helper = "Press ENTER to save, and ESC to cancel."
+        else:
+            hotkey_field.value = settings["alternate_hotkey"]
+            hotkey_field.helper = "Click to capture new hotkey."
         page.update()
 
     def on_hotkey_field_click(e):
@@ -186,8 +196,7 @@ def build_config_window(page: ft.Page):
                 current.append("win")
             current.append(KEY_ALIASES.get(key_name, key_name))
             captured_keys[:] = current
-        hotkey_field.value = format_hotkey(captured_keys) or "Recording keys..."
-        page.update()
+        refresh_hotkey_field()
 
     hotkey_field = ft.TextField(
         hint_text="Click to capture hotkey",
@@ -195,7 +204,7 @@ def build_config_window(page: ft.Page):
         read_only=True,
         on_click=on_hotkey_field_click,
         width=300,
-        border=ft.InputBorder.OUTLINE,
+        border=ft.OutlineInputBorder(),
         helper="Click to capture new hotkey.",
     )
 
@@ -208,7 +217,7 @@ def build_config_window(page: ft.Page):
         value="Loading...",
         expand=True,
         autofocus=False,
-        border=ft.InputBorder.OUTLINE,
+        border=ft.OutlineInputBorder(),
         text_style=ft.TextStyle(size=13, font_family="Consolas" if paths.IS_WINDOWS else "monospace"),
     )
 
@@ -271,22 +280,29 @@ def build_config_window(page: ft.Page):
     async def poll_log():
         while True:
             try:
-                if os.path.exists(paths.LOG_FILE):
-                    with open(paths.LOG_FILE, "r", encoding="utf-8") as f:
-                        lines = f.readlines()
-                    log_field.value = "".join(lines[-10:]) if lines else "(Log empty.)"
-                else:
-                    log_field.value = "(No log file found.)"
-            except Exception as e:
+                # only the tail is read; the log is never rotated and this runs
+                # once a second for as long as the window is open
+                with open(paths.LOG_FILE, "rb") as f:
+                    f.seek(0, os.SEEK_END)
+                    f.seek(max(0, f.tell() - LOG_TAIL_BYTES))
+                    lines = f.read().decode("utf-8", "replace").splitlines()
+                log_field.value = "\n".join(lines[-LOG_TAIL_LINES:]) if lines else "(Log empty.)"
+            except FileNotFoundError:
+                log_field.value = "(No log file found.)"
+            except OSError as e:
                 log_field.value = f"(Error reading log: {e})"
             log_field.update()
             await asyncio.sleep(1)
 
     page.on_keyboard_event = on_key_down
+    # window.center is a coroutine in flet 1.0, so it cannot be called from
+    # this synchronous builder
+    page.run_task(page.window.center)
     page.run_task(poll_log)
 
 
 def run():
+    setup_logging()
     if not paths.IS_WINDOWS:
         # the Flet client renders a black window on hybrid NVIDIA machines
         # unless GL is software-rendered; users can override by exporting it
