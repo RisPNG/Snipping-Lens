@@ -96,14 +96,19 @@ class SettingsStore:
                 continue
             updates[key] = {"value": value, "description": DEFAULT_SETTINGS[key]["description"]}
         try:
-            try:
+            raw = {}
+            if os.path.exists(self.path):
                 with open(self.path, "r") as f:
+                    # a file that exists but will not parse is another writer
+                    # mid-write; merging into {} would drop every other setting
                     raw = json.load(f)
-            except Exception:
-                raw = {}
             raw.update(updates)
             os.makedirs(os.path.dirname(self.path), exist_ok=True)
-            with open(self.path, "w") as f:
+            # written whole and moved into place so a reader -- the other
+            # process, or our own settings watcher -- never sees a partial file
+            temporary = f"{self.path}.tmp"
+            with open(temporary, "w") as f:
                 json.dump(raw, f, indent=4)
+            os.replace(temporary, self.path)
         except Exception as e:
-            logging.error("Failed to update settings: %s", e)
+            logging.error("Failed to update settings at %s, left unchanged: %s", self.path, e)

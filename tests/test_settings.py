@@ -25,11 +25,49 @@ def test_round_trip_wrapped_format(tmp_path):
     assert loaded["startup"] == 1
 
 
-def test_load_accepts_plain_values_from_v4_files(tmp_path):
+def test_load_accepts_both_plain_and_wrapped_values(tmp_path):
     path = tmp_path / "settings.json"
-    path.write_text(json.dumps({"tray_status": {"value": 1, "description": "x"}, "startup": 0}))
+    path.write_text(
+        json.dumps({"tray_status": 1, "startup": {"value": 1, "description": "x"}})
+    )
     values = SettingsStore(path).load()
     assert values["tray_status"] == TRAY_ONLY
+    assert values["startup"] == 1
+
+
+def test_load_ignores_keys_dropped_since_v4(tmp_path):
+    path = tmp_path / "settings.json"
+    path.write_text(
+        json.dumps(
+            {
+                "tray_ui_enabled": {"value": True},
+                "tray_snip_token": "abc",
+                "last_litterbox_url": "https://files.catbox.moe/x.png",
+                "tray_status": {"value": 1},
+            }
+        )
+    )
+    values = SettingsStore(path).load()
+    assert values["tray_status"] == TRAY_ONLY
+    assert "tray_ui_enabled" not in values and "tray_snip_token" not in values
+
+
+def test_save_is_atomic_and_leaves_no_temporary_file(tmp_path):
+    path = tmp_path / "settings.json"
+    store = SettingsStore(path)
+    store.save({"tray_status": TRAY_ONLY})
+    assert [p.name for p in tmp_path.iterdir()] == ["settings.json"]
+
+
+def test_save_refuses_to_wipe_a_file_it_cannot_parse(tmp_path, caplog):
+    """A truncated or hand-broken file must not be treated as empty: merging
+    into {} would replace every other setting with the handed-in key alone."""
+    path = tmp_path / "settings.json"
+    path.write_text('{"tray_status": {"value": 1, "descr')
+    with caplog.at_level(logging.ERROR):
+        SettingsStore(path).save({"last_detected_image": "abc"})
+    assert path.read_text() == '{"tray_status": {"value": 1, "descr'
+    assert any("left unchanged" in r.message for r in caplog.records)
 
 
 def test_invalid_values_fall_back_to_defaults(tmp_path, caplog):
