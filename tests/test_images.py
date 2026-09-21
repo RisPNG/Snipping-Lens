@@ -1,4 +1,3 @@
-from PySide6.QtCore import QBuffer, QIODevice
 from PySide6.QtGui import QImage
 
 from sniplens.images import image_hash, png_bytes
