@@ -30,7 +30,7 @@ Snipping Lens is a cross-platform application that automatically detects when yo
 
 https://github.com/user-attachments/assets/56979ab6-48e1-4112-af36-c053e9e17089
 
-Current demo is for older versions. Snipping Lens 3 demo will be uploaded soon.
+Current demo is for older versions.
 
 ## Installation
 
@@ -42,8 +42,9 @@ Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the lates
 
 **Windows:**
 
-- Use Win+Shift+S, or left-click the tray icon.
-- Screenshots are automatically detected and opened in Google Lens.
+- Use Win+Shift+S, Print Screen, the configured hotkey, or left-click the tray icon.
+- Any of those opens the Windows Snipping Tool; the capture it puts on your clipboard is detected and opened in Google Lens.
+- Images copied from anywhere else are ignored, so ordinary copying never uploads anything.
 
 **Linux:**
 
@@ -90,7 +91,7 @@ As long as Litterbox returns the expected response (a direct image URL) and as l
 
 ## Building from Source
 
-Both `setup_win.vbs` (Windows) and `setup_linux.sh` (Linux) builds the application from source using its own portable Python environment ([MsPy](https://github.com/RisPNG/MsPy) 3.11). If you want to use your own Python environment, you need to adjust the path inside the scripts in the bin/win folder.
+Both `setup_win.vbs` (Windows) and `setup_linux.sh` (Linux) build the application from source using their own portable Python environment ([MsPy](https://github.com/RisPNG/MsPy) 3.11). The application code lives in `src/`. If you want to use your own Python environment, adjust the interpreter path in `bin/win/install.bat` and `bin/win/launch.bat` on Windows, or in `setup_linux.sh` on Linux.
 
 ## Support and Contributing
 
@@ -99,7 +100,7 @@ If you like this project, please leave a star 🌟, and share it with your frien
 If you encounter any issue:
 
 1. Check the [issues page](https://github.com/RisPNG/Snipping-Lens/issues) if issue has been raised.
-2. Create a new issue if necessary and provide in-depth details of the issue including the relevant logs (right-click tray icon > Show Logs).
+2. Create a new issue if necessary and provide in-depth details of the issue including the relevant logs. The last lines are shown in the app window (tray > Open App); the full log is at `bin/win/logs/sniplens.log` on Windows and `bin/linux/logs/sniplens.log` on Linux.
 
 ## Disclaimer
 
