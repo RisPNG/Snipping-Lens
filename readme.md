@@ -48,7 +48,9 @@ Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the lates
 **Linux:**
 
 - Use the configured hotkey (default: Alt + Ctrl + \\), or click "Snip" from the tray icon.
-- A region selection overlay appears. Select a region and it opens in Google Lens.
+- On X11, Snipping Lens shows its own region selection overlay and captures the screen directly.
+- On Wayland, the screenshot is taken through your desktop's XDG Desktop Portal, which shows its own selection UI.
+- The captured screenshot is also copied to your clipboard.
 
 ### Tray Icon Actions
 
@@ -68,8 +70,7 @@ Check [Releases](https://github.com/RisPNG/Snipping-Lens/releases) for the lates
 
 ### Linux
 
-- `gnome-screenshot` on GNOME / `spectacle` on KDE / `maim` for other X11-based DE / `wayshot` for other Wayland-based DE.
-- The setup script (`setup_linux.sh`) checks for missing dependencies and tells you what to install.
+- No screenshot tools needed. X11 is supported out of the box; on Wayland your desktop must provide the XDG Screenshot portal (GNOME, KDE and most modern desktops do). If it is missing, the log suggests the backend package to install for your desktop.
 
 ## FAQ
 
@@ -89,7 +90,7 @@ As long as Litterbox returns the expected response (a direct image URL) and as l
 
 ## Building from Source
 
-Both `setup_win.vbs` (Windows) and `setup_linux.sh` (Linux) builds the application from source using its own Python 3.10/3.11 environment. If you want to use your own Python environment, you need to adjust the path inside the scripts in the bin/win folder.
+Both `setup_win.vbs` (Windows) and `setup_linux.sh` (Linux) builds the application from source using its own portable Python environment ([MsPy](https://github.com/RisPNG/MsPy) 3.11). If you want to use your own Python environment, you need to adjust the path inside the scripts in the bin/win folder.
 
 ## Support and Contributing
 
