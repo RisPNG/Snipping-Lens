@@ -1,8 +1,15 @@
 import json
 import logging
 import os
+import time
 
 from sniplens import paths
+
+# Windows will not replace a file another process has open, nor open one that
+# is being replaced. The main app and the config window both read and replace
+# the settings file, so each briefly waits out the other.
+SHARING_RETRY_ATTEMPTS = 50
+SHARING_RETRY_DELAY = 0.01
 
 PAUSED = 0
 TRAY_ONLY = 1
@@ -61,6 +68,15 @@ def _valid(key, value):
     return True
 
 
+def _wait_out_sharing_violation(operation, *args):
+    for _ in range(SHARING_RETRY_ATTEMPTS - 1):
+        try:
+            return operation(*args)
+        except PermissionError:
+            time.sleep(SHARING_RETRY_DELAY)
+    return operation(*args)
+
+
 class SettingsStore:
     """Reader/writer for the wrapped {value, description} settings file shared
     between the main app and the config window process."""
@@ -70,8 +86,10 @@ class SettingsStore:
 
     def load(self):
         try:
-            with open(self.path, "r") as f:
+            with _wait_out_sharing_violation(open, self.path, "r") as f:
                 raw = json.load(f)
+        except FileNotFoundError:
+            raw = {}
         except Exception:
             logging.warning("Settings file unreadable, using defaults: %s", self.path)
             raw = {}
@@ -98,7 +116,7 @@ class SettingsStore:
         try:
             raw = {}
             if os.path.exists(self.path):
-                with open(self.path, "r") as f:
+                with _wait_out_sharing_violation(open, self.path, "r") as f:
                     # a file that exists but will not parse is another writer
                     # mid-write; merging into {} would drop every other setting
                     raw = json.load(f)
@@ -109,6 +127,6 @@ class SettingsStore:
             temporary = f"{self.path}.tmp"
             with open(temporary, "w") as f:
                 json.dump(raw, f, indent=4)
-            os.replace(temporary, self.path)
+            _wait_out_sharing_violation(os.replace, temporary, self.path)
         except Exception as e:
             logging.error("Failed to update settings at %s, left unchanged: %s", self.path, e)

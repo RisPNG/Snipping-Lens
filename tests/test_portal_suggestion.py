@@ -1,6 +1,9 @@
 import pytest
 
-from sniplens.capture.portal import portal_unavailable_message
+# the portal backend and its D-Bus client are Linux-only dependencies
+pytest.importorskip("dbus_fast")
+
+from sniplens.capture.portal import portal_unavailable_message  # noqa: E402
 
 
 @pytest.mark.parametrize(

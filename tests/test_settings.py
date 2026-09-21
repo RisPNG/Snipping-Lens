@@ -1,12 +1,16 @@
 import json
 import logging
+import os
 
-from sniplens.settings import ALWAYS_ON, PAUSED, TRAY_ONLY, SettingsStore
+from sniplens.settings import ALWAYS_ON, PAUSED, SHARING_RETRY_ATTEMPTS, TRAY_ONLY, SettingsStore
 
 
-def test_load_defaults_when_file_missing(tmp_path):
+def test_load_defaults_when_file_missing(tmp_path, caplog):
+    """A first run has no settings file yet, which is not worth a warning."""
     store = SettingsStore(tmp_path / "settings.json")
-    values = store.load()
+    with caplog.at_level(logging.WARNING):
+        values = store.load()
+    assert not caplog.records
     assert values["tray_status"] == ALWAYS_ON
     assert values["startup"] == 0
     assert values["alternate_hotkey_bypass"] is True
@@ -104,3 +108,47 @@ def test_save_merges_and_keeps_unknown_keys(tmp_path):
     raw = json.loads(path.read_text())
     assert raw["future_key"] == {"value": 42}
     assert raw["tray_status"]["value"] == PAUSED
+
+
+def refused(times, operation):
+    """`operation`, refused with a Windows sharing violation `times` times
+    first, as when the other process has the settings file open."""
+    refusals = [PermissionError(13, "Permission denied")] * times
+
+    def attempt(*args):
+        if refusals:
+            raise refusals.pop()
+        return operation(*args)
+
+    return attempt
+
+
+def test_save_waits_out_the_other_process_holding_the_file(tmp_path, monkeypatch):
+    path = tmp_path / "settings.json"
+    monkeypatch.setattr("sniplens.settings.SHARING_RETRY_DELAY", 0)
+    monkeypatch.setattr("sniplens.settings.os.replace", refused(3, os.replace))
+    SettingsStore(path).save({"tray_status": TRAY_ONLY})
+    assert SettingsStore(path).load()["tray_status"] == TRAY_ONLY
+
+
+def test_load_waits_out_the_other_process_replacing_the_file(tmp_path, monkeypatch, caplog):
+    """Falling back to the defaults here would briefly run the main app on
+    settings the user never chose."""
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps({"tray_status": {"value": PAUSED}}))
+    monkeypatch.setattr("sniplens.settings.SHARING_RETRY_DELAY", 0)
+    monkeypatch.setattr("sniplens.settings.open", refused(3, open), raising=False)
+    with caplog.at_level(logging.WARNING):
+        assert SettingsStore(path).load()["tray_status"] == PAUSED
+    assert not caplog.records
+
+
+def test_save_gives_up_on_a_file_that_stays_locked(tmp_path, monkeypatch, caplog):
+    path = tmp_path / "settings.json"
+    path.write_text(json.dumps({"tray_status": {"value": PAUSED}}))
+    monkeypatch.setattr("sniplens.settings.SHARING_RETRY_DELAY", 0)
+    monkeypatch.setattr("sniplens.settings.os.replace", refused(SHARING_RETRY_ATTEMPTS, os.replace))
+    with caplog.at_level(logging.ERROR):
+        SettingsStore(path).save({"tray_status": TRAY_ONLY})
+    assert json.loads(path.read_text())["tray_status"]["value"] == PAUSED
+    assert any("left unchanged" in r.message for r in caplog.records)

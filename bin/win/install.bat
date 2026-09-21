@@ -1,18 +1,11 @@
 @echo off
 setlocal enabledelayedexpansion
 cd /d "%~dp0"
-for /f "tokens=2-4 delims=/ " %%a in ("%DATE%") do (
-    set dmonth=%%a
-    set dday=%%b
-    set dyear=%%c
-)
-for /f "tokens=1-3 delims=:." %%a in ("%TIME%") do (
-    set dhour=%%a
-    set dmin=%%b
-    set dsec=%%c
-)
-set dhour=%dhour: =0%
-set LOGFILE=%~dp0..\..\logs\build_win_%dyear%-%dmonth%-%dday%_%dhour%%dmin%%dsec%.log
+rem inherited from a PowerShell 7 session, the module path makes Windows
+rem PowerShell miss Get-FileHash; unset, it falls back to its own
+set PSModulePath=
+for /f %%T in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HHmmss"') do set LOGSTAMP=%%T
+set LOGFILE=%~dp0..\..\logs\build_win_%LOGSTAMP%.log
 set BASE_PATH=%~dp0
 set ARCH=%PROCESSOR_ARCHITECTURE%
 if /i "%PROCESSOR_ARCHITEW6432%"=="ARM64" set ARCH=ARM64

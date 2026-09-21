@@ -1,7 +1,7 @@
 import pytest
 from pynput import keyboard
 
-from sniplens.hotkey import NAMED_KEY_TO_PYNPUT, to_pynput_hotkey
+from sniplens.hotkey import NAMED_KEY_TO_PYNPUT, HotkeyController, to_pynput_hotkey
 
 
 def test_plain_modifiers():
@@ -41,3 +41,25 @@ def test_every_named_key_is_accepted_by_pynput(name):
 @pytest.mark.parametrize("hotkey", ["win+shift+s", "printscreen", "alt+ctrl+\\"])
 def test_system_and_default_hotkeys_are_accepted_by_pynput(hotkey):
     keyboard.HotKey.parse(to_pynput_hotkey(hotkey))
+
+
+def test_injected_key_events_fire_hotkeys(monkeypatch):
+    """Keyboard software such as AutoHotkey or PowerToys can re-inject every
+    physical key press, so a hotkey must fire for injected events too. Events
+    are fed through pynput's own listener callbacks, without an OS hook."""
+    monkeypatch.setattr(keyboard.Listener, "start", lambda self: None)
+    fired = []
+    controller = HotkeyController()
+    controller.reconfigure({"win+shift+s": lambda: fired.append("snip")})
+    listener = controller._listener
+    combination = (keyboard.Key.shift, keyboard.Key.cmd, keyboard.KeyCode.from_char("S"))
+
+    for key in combination:
+        listener.on_press(key, True)
+    assert fired == ["snip"]
+
+    for key in reversed(combination):
+        listener.on_release(key, True)
+    for key in combination:
+        listener.on_press(key, True)
+    assert fired == ["snip", "snip"]

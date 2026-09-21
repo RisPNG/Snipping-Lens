@@ -123,8 +123,10 @@ class ApplicationController(QObject):
             logging.info("Config window already running.")
             return
         logging.info("Launching Snipping Lens main window.")
+        # the window closes itself once this pipe does, so it never outlives
+        # the app - whether the app quits or dies
         self._config_process = subprocess.Popen(
-            [sys.executable, paths.CONFIG_WINDOW_SCRIPT]
+            [sys.executable, paths.CONFIG_WINDOW_SCRIPT], stdin=subprocess.PIPE
         )
 
     def quit(self):
@@ -136,8 +138,8 @@ class ApplicationController(QObject):
         self._hotkey.stop()
         self._capture.stop()
         self._lens.stop()
-        if self._config_process is not None and self._config_process.poll() is None:
-            self._config_process.terminate()
+        if self._config_process is not None:
+            self._config_process.stdin.close()
         if self._tray is not None:
             self._tray.shutdown()
         if self._wakeup_writer is not None:

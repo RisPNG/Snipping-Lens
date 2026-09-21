@@ -64,12 +64,18 @@ def to_pynput_hotkey(hotkey):
 
 
 class HotkeyController:
-    """Keeps exactly one pynput global hotkey listener armed for the hotkeys
-    the application currently wants. The listener does not suppress, so the
-    keys it watches still reach the desktop."""
+    """Keeps exactly one pynput keyboard listener armed for the hotkeys the
+    application currently wants. The listener does not suppress, so the keys
+    it watches still reach the desktop.
+
+    Injected key events count like physical ones. Keyboard software such as
+    AutoHotkey, PowerToys or a vendor keyboard suite can re-inject every key
+    the user presses, and pynput's GlobalHotKeys, which drops injected events,
+    would never fire for anyone running it."""
 
     def __init__(self):
         self._listener = None
+        self._bindings = []
         self._current = ()
 
     def reconfigure(self, hotkeys):
@@ -84,9 +90,11 @@ class HotkeyController:
             logging.info("[Hotkey] No hotkeys to listen for.")
             return
         try:
-            self._listener = keyboard.GlobalHotKeys(
-                {to_pynput_hotkey(hotkey): callback for hotkey, callback in hotkeys.items()}
-            )
+            self._bindings = [
+                keyboard.HotKey(keyboard.HotKey.parse(to_pynput_hotkey(hotkey)), callback)
+                for hotkey, callback in hotkeys.items()
+            ]
+            self._listener = keyboard.Listener(on_press=self._on_press, on_release=self._on_release)
             self._listener.start()
             logging.info("[Hotkey] Listening for: %s", ", ".join(hotkeys))
         except Exception as e:
@@ -98,6 +106,16 @@ class HotkeyController:
     def stop(self):
         self._stop_listener()
         self._current = ()
+
+    def _on_press(self, key):
+        key = self._listener.canonical(key)
+        for binding in self._bindings:
+            binding.press(key)
+
+    def _on_release(self, key):
+        key = self._listener.canonical(key)
+        for binding in self._bindings:
+            binding.release(key)
 
     def _stop_listener(self):
         if self._listener is not None:

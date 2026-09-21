@@ -1,6 +1,8 @@
 import asyncio
 import logging
 import os
+import sys
+import threading
 
 import flet as ft
 
@@ -299,6 +301,16 @@ def build_config_window(page: ft.Page):
     # this synchronous builder
     page.run_task(page.window.center)
     page.run_task(poll_log)
+
+    def close_with_main_app():
+        # the main app holds the other end of stdin, so end of file means it
+        # has quit or died. A daemon thread, because the process must still
+        # exit when the user closes the window first, and os.read, because a
+        # daemon thread holding sys.stdin's lock aborts the interpreter at exit
+        os.read(sys.stdin.fileno(), 1)
+        page.run_task(page.window.close)
+
+    threading.Thread(target=close_with_main_app, daemon=True).start()
 
 
 def run():
