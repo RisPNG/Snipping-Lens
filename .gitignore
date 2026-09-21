@@ -177,7 +177,7 @@ cython_debug/
 *.log
 *.json
 *WPy64-310111/
-*MsPy-3_11_14
+*MsPy-*/
 *.venv/
 *.exe
 *.zip
@@ -185,3 +185,13 @@ cython_debug/
 *.lock
 !tee-x64.exe
 !tee-a64.exe
+
+# ### v5 additions
+int/*
+!int/.keep
+logs/*
+!logs/.keep
+bin/*/config/*
+!bin/*/config/.keep
+bin/*/logs/*
+!bin/*/logs/.keep

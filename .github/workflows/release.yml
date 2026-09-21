@@ -21,9 +21,9 @@ jobs:
       - name: Create Windows zip
         run: |
           zip -r SnippingLens-Windows.zip \
-            create_lnk.vbs \
             setup_win.vbs \
             readme.md \
+            src/ \
             bin/win/ \
             etc/ \
             int/ \
@@ -49,6 +49,7 @@ jobs:
           zip -r SnippingLens-Linux.zip \
             setup_linux.sh \
             readme.md \
+            src/ \
             bin/linux/ \
             int/ \
             logs/
@@ -134,7 +135,7 @@ jobs:
             ### Windows
             1. Download and extract `SnippingLens-Windows.zip`.
             2. Run `setup_win.vbs` to start the application.
-            3. Optionally run `create_lnk.vbs` to create a desktop shortcut.
+            3. A "Snipping Lens" shortcut is created automatically; the config window (tray > Open App) can add it to startup and re-create it after you move the folder.
 
             ### Linux
             1. Download and extract `SnippingLens-Linux.zip`.

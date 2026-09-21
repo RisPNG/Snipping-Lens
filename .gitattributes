@@ -1,0 +1,18 @@
+# cmd.exe reads batch files by byte offset, so an LF-only .bat can send goto
+# into the middle of a line. These must reach Windows with CRLF whatever the
+# cloning machine has core.autocrlf set to.
+*.bat text eol=crlf
+*.vbs text eol=crlf
+
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+
+*.png binary
+*.ico binary
+*.exe binary
+*.zip binary
