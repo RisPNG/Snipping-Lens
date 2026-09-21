@@ -3,27 +3,22 @@ import logging
 from PySide6.QtGui import QCursor, QIcon
 from PySide6.QtWidgets import QMenu, QSystemTrayIcon
 
-from sniplens import APP_NAME
+from sniplens import APP_NAME, theme
 
-MENU_STYLE = """
-QMenu {
-    background-color: #333333;
-    color: white;
-    border: 1px solid #555;
+MENU_STYLE = f"""
+QMenu {{
+    background-color: {theme.MENU_BACKGROUND};
+    color: {theme.MENU_TEXT};
+    border: 1px solid {theme.MENU_BORDER};
     padding: 5px;
-}
-QMenu::item {
+}}
+QMenu::item {{
     padding: 5px 20px;
     background-color: transparent;
-}
-QMenu::item:selected {
-    background-color: #555555;
-}
-QMenu::item[text="Exit"] {
-    text-align: center;
-    color: #ff6b6b;
-    font-weight: bold;
-}
+}}
+QMenu::item:selected {{
+    background-color: {theme.MENU_HIGHLIGHT};
+}}
 """
 
 
@@ -49,6 +44,7 @@ class TrayController:
             )
         open_action = self.menu.addAction("Open App")
         open_action.triggered.connect(self._commands.open_config_window)
+        self.menu.addSeparator()
         quit_action = self.menu.addAction("Exit")
         quit_action.triggered.connect(self._commands.quit)
         self.tray_icon.setContextMenu(self.menu)
