@@ -16,3 +16,5 @@ WINDOW_ICON_PATH = os.path.join(
     ASSETS_DIR, "sniplens.ico" if IS_WINDOWS else "sniplens.png"
 )
 CONFIG_WINDOW_SCRIPT = os.path.join(SRC_DIR, "config_window.py")
+MAIN_SCRIPT = os.path.join(SRC_DIR, "main.py")
+VENV_DIR = os.path.join(ROOT, "int", PLATFORM_DIR_NAME, "venv")

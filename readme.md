@@ -91,7 +91,7 @@ As long as Litterbox returns the expected response (a direct image URL) and as l
 
 ## Building from Source
 
-Both `setup_win.vbs` (Windows) and `setup_linux.sh` (Linux) build the application from source using their own portable Python environment ([MsPy](https://github.com/RisPNG/MsPy) 3.11). The application code lives in `src/`. If you want to use your own Python environment, adjust the interpreter path in `bin/win/install.bat` and `bin/win/launch.bat` on Windows, or in `setup_linux.sh` on Linux.
+Both `setup_win.vbs` (Windows) and `setup_linux.sh` (Linux) build the application from source using their own portable Python environment ([MsPy](https://github.com/RisPNG/MsPy) 3.11). The application code lives in `src/`. If you want to use your own Python environment, adjust the interpreter path in `bin/win/install.bat` on Windows, or in `setup_linux.sh` on Linux.
 
 ## Support and Contributing
 

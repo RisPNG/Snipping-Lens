@@ -9,8 +9,11 @@ if paths.IS_WINDOWS:
     import winshell
 
     ROOT_LNK = os.path.join(paths.ROOT, LNK_NAME)
-    RUN_VBS = os.path.join(paths.PLATFORM_DIR, "run.vbs")
     LNK_ICON = os.path.join(paths.ASSETS_DIR, "sniplens.ico")
+    # pythonw runs without a console, so the shortcut needs no script wrapper
+    # to hide one for it
+    PYTHONW = os.path.join(paths.VENV_DIR, "Scripts", "pythonw.exe")
+    LNK_ARGUMENTS = f'"{paths.MAIN_SCRIPT}"'
 else:
     AUTOSTART_FILE = os.path.expanduser(
         "~/.config/autostart/snipping-lens-startup.desktop"
@@ -96,12 +99,14 @@ if paths.IS_WINDOWS:
             link = winshell.shortcut(lnk_path)
             if (
                 link.path
-                and os.path.abspath(link.path) == os.path.abspath(RUN_VBS)
+                and os.path.abspath(link.path) == os.path.abspath(PYTHONW)
+                and link.arguments == LNK_ARGUMENTS
                 and link.icon_location == (LNK_ICON, 0)
             ):
                 return
         with winshell.shortcut(lnk_path) as link:
-            link.path = RUN_VBS
+            link.path = PYTHONW
+            link.arguments = LNK_ARGUMENTS
             link.icon_location = (LNK_ICON, 0)
             link.description = APP_NAME
             link.working_directory = paths.ROOT

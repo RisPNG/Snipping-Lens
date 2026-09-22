@@ -1,5 +1,7 @@
 import logging
 import os
+import sys
+import threading
 
 from sniplens import paths
 
@@ -17,6 +19,18 @@ NOISY_LOGGERS = (
 )
 
 
+def _log_unhandled_exception(kind, value, traceback):
+    logging.critical("Unhandled exception", exc_info=(kind, value, traceback))
+
+
+def _log_unhandled_thread_exception(args):
+    logging.critical(
+        "Unhandled exception in thread %s",
+        args.thread.name if args.thread else "unknown",
+        exc_info=(args.exc_type, args.exc_value, args.exc_traceback),
+    )
+
+
 def setup_logging():
     os.makedirs(paths.LOGS_DIR, exist_ok=True)
     logging.basicConfig(
@@ -26,3 +40,7 @@ def setup_logging():
     )
     for name in NOISY_LOGGERS:
         logging.getLogger(name).setLevel(logging.WARNING)
+    # both processes run under pythonw on Windows, which has no stderr, so a
+    # crash would otherwise leave nothing behind
+    sys.excepthook = _log_unhandled_exception
+    threading.excepthook = _log_unhandled_thread_exception
