@@ -183,8 +183,6 @@ cython_debug/
 *.zip
 *.lnk
 *.lock
-!tee-x64.exe
-!tee-a64.exe
 
 # ### v5 additions
 int/*

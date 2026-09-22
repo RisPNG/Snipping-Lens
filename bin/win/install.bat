@@ -6,24 +6,24 @@ rem PowerShell miss Get-FileHash; unset, it falls back to its own
 set PSModulePath=
 for /f %%T in ('powershell -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HHmmss"') do set LOGSTAMP=%%T
 set LOGFILE=%~dp0..\..\logs\build_win_%LOGSTAMP%.log
+rem exported so PowerShell reads the path from the environment instead of
+rem having it pasted into a command line it would have to re-quote
+set "SNIPLENS_LOG=%LOGFILE%"
 set BASE_PATH=%~dp0
 set ARCH=%PROCESSOR_ARCHITECTURE%
 if /i "%PROCESSOR_ARCHITEW6432%"=="ARM64" set ARCH=ARM64
 
 if /i "%ARCH%"=="ARM64" (
-    set TEE_EXE=%BASE_PATH%..\..\etc\tee-a64.exe
     set PYTHON_EXE=%BASE_PATH%..\..\int\win\MsPy-3_11_15\python.exe
     set PYTHON_HOME=%BASE_PATH%..\..\int\win\MsPy-3_11_15
     set PYTHON_DIST=%BASE_PATH%..\..\int\win\MsPy-3_11_15.zip
     set PYTHON_DOWNLOAD_URL=https://github.com/RisPNG/MsPy/releases/download/3.11.15/MsPy-3_11_15-Windows-ARM64.zip
 ) else (
-    set TEE_EXE=%BASE_PATH%..\..\etc\tee-x64.exe
     set PYTHON_EXE=%BASE_PATH%..\..\int\win\MsPy-3_11_14\python.exe
     set PYTHON_HOME=%BASE_PATH%..\..\int\win\MsPy-3_11_14
     set PYTHON_DIST=%BASE_PATH%..\..\int\win\MsPy-3_11_14.zip
     set PYTHON_DOWNLOAD_URL=https://github.com/RisPNG/MsPy/releases/download/3.11.14/MsPy-3_11_14-win.zip
 )
-for %%I in ("%TEE_EXE%") do set TEE_EXE=%%~fI
 for %%I in ("%PYTHON_EXE%") do set PYTHON_EXE=%%~fI
 for %%I in ("%PYTHON_HOME%") do set PYTHON_HOME=%%~fI
 for %%I in ("%PYTHON_DIST%") do set PYTHON_DIST=%%~fI
@@ -33,33 +33,33 @@ set REQUIREMENTS=%BASE_PATH%..\..\src\requirements.txt
 set REQUIREMENTS_WIN=%BASE_PATH%..\..\src\requirements-win.txt
 set REQ_HASH_FILE=%VENV_PATH%\.requirements.sha256
 
-echo ========================================									| "%TEE_EXE%" -a "%LOGFILE%"
-echo Script started: %DATE% %TIME%												| "%TEE_EXE%" -a "%LOGFILE%"
-echo Architecture: %ARCH%														| "%TEE_EXE%" -a "%LOGFILE%"
-echo ========================================									| "%TEE_EXE%" -a "%LOGFILE%"
+call :log "========================================"
+call :log "Script started: %DATE% %TIME%"
+call :log "Architecture: %ARCH%"
+call :log "========================================"
 
 if not exist "%INT_WIN_PATH%" mkdir "%INT_WIN_PATH%"
 
 if not exist "%PYTHON_DIST%" (
-    echo Downloading dependencies...											| "%TEE_EXE%" -a "%LOGFILE%"
-    echo curl -L -o "%PYTHON_DIST%" "%PYTHON_DOWNLOAD_URL%"						| "%TEE_EXE%" -a "%LOGFILE%"
-    curl -L -o "%PYTHON_DIST%" "%PYTHON_DOWNLOAD_URL%"							| "%TEE_EXE%" -a "%LOGFILE%"
+    call :log "Downloading dependencies..."
+    call :log "curl -L -o %PYTHON_DIST% %PYTHON_DOWNLOAD_URL%"
+    curl -L -o "%PYTHON_DIST%" "%PYTHON_DOWNLOAD_URL%"
     if not exist "%PYTHON_DIST%" (
-        echo Download failed.													| "%TEE_EXE%" -a "%LOGFILE%"
+        call :log "Download failed."
         goto :end
     )
 )
 
 if not exist "%PYTHON_EXE%" (
-    echo Installing...															| "%TEE_EXE%" -a "%LOGFILE%"
-    tar -xf "%PYTHON_DIST%" -C "%INT_WIN_PATH%"									| "%TEE_EXE%" -a "%LOGFILE%"
+    call :log "Installing..."
+    tar -xf "%PYTHON_DIST%" -C "%INT_WIN_PATH%"
     if not exist "%PYTHON_EXE%" (
-        echo Installation failed, please run the setup again.					| "%TEE_EXE%" -a "%LOGFILE%"
+        call :log "Installation failed, please run the setup again."
         goto :end
     )
 )
 
-echo Setting up environment...													| "%TEE_EXE%" -a "%LOGFILE%"
+call :log "Setting up environment..."
 set NEW_VENV=0
 if not exist "%VENV_PATH%\Scripts\python.exe" (
     set NEW_VENV=1
@@ -72,7 +72,7 @@ if not exist "%VENV_PATH%\Scripts\python.exe" (
 
 if "%NEW_VENV%"=="1" (
     if exist "%VENV_PATH%" rmdir /s /q "%VENV_PATH%"
-    "%PYTHON_EXE%" -m venv "%VENV_PATH%"										| "%TEE_EXE%" -a "%LOGFILE%"
+    "%PYTHON_EXE%" -m venv "%VENV_PATH%"
 )
 
 set NEW_REQ_HASH=0
@@ -87,19 +87,26 @@ del "%TEMP%\sniplens_req_hash.txt"
 
 if "%NEW_VENV%"=="1" goto :install_deps
 if "%OLD_REQ_HASH%"=="%NEW_REQ_HASH%" (
-    echo Dependencies are up to date ^(skipping pip install^)						| "%TEE_EXE%" -a "%LOGFILE%"
+    call :log "Dependencies are up to date, skipping pip install"
     goto :end
 )
 
 :install_deps
-echo Installing/updating dependencies...										| "%TEE_EXE%" -a "%LOGFILE%"
-"%VENV_PATH%\Scripts\python.exe" -m pip install --upgrade pip					| "%TEE_EXE%" -a "%LOGFILE%"
-"%VENV_PATH%\Scripts\python.exe" -m pip install -r "%REQUIREMENTS%" -r "%REQUIREMENTS_WIN%"	| "%TEE_EXE%" -a "%LOGFILE%"
+call :log "Installing/updating dependencies..."
+"%VENV_PATH%\Scripts\python.exe" -m pip install --upgrade pip 2>&1 | powershell -NoProfile -Command "$input | Tee-Object -FilePath $env:SNIPLENS_LOG -Append"
+"%VENV_PATH%\Scripts\python.exe" -m pip install -r "%REQUIREMENTS%" -r "%REQUIREMENTS_WIN%" 2>&1 | powershell -NoProfile -Command "$input | Tee-Object -FilePath $env:SNIPLENS_LOG -Append"
 echo %NEW_REQ_HASH%> "%REQ_HASH_FILE%"
 
-echo ========================================									| "%TEE_EXE%" -a "%LOGFILE%"
-echo Script ended: %DATE% %TIME%												| "%TEE_EXE%" -a "%LOGFILE%"
-echo ========================================									| "%TEE_EXE%" -a "%LOGFILE%"
+call :log "========================================"
+call :log "Script ended: %DATE% %TIME%"
+call :log "========================================"
 
 :end
+exit /b
+
+rem shows the line and appends it to the build log, which is what the bundled
+rem tee binaries used to do
+:log
+echo %~1
+>>"%LOGFILE%" echo %~1
 exit /b

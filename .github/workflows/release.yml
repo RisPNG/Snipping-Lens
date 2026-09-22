@@ -25,7 +25,6 @@ jobs:
             readme.md \
             src/ \
             bin/win/ \
-            etc/ \
             int/ \
             logs/
 
