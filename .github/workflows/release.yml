@@ -77,7 +77,7 @@ jobs:
           echo "$commit_msg"
 
           # Extract the version (matches digits and optional dash/letters)
-          version=$(echo "$commit_msg" | sed -n 's/.*Release v\([[:alnum:].\-]\+\).*/\1/p')
+          version=$(echo "$commit_msg" | sed -n 's/.*Release v\([0-9][[:alnum:].\-]*\).*/\1/Ip')
 
           # Extract the description between the tilde markers.
           # This assumes the description is enclosed between lines containing only '~'

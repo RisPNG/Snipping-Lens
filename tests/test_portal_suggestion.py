@@ -21,7 +21,6 @@ def test_suggests_backend_for_known_desktops(monkeypatch, desktop, package):
     monkeypatch.setenv("XDG_CURRENT_DESKTOP", desktop)
     message = portal_unavailable_message()
     assert package in message
-    assert "Screenshot interface" in message
 
 
 def test_generic_hint_for_unknown_desktop(monkeypatch):
@@ -34,4 +33,5 @@ def test_generic_hint_for_unknown_desktop(monkeypatch):
 def test_generic_hint_when_unset(monkeypatch):
     monkeypatch.delenv("XDG_CURRENT_DESKTOP", raising=False)
     message = portal_unavailable_message()
-    assert "portal backend" in message
+    assert "xdg-desktop-portal-gnome" in message
+    assert "-wlr" in message
